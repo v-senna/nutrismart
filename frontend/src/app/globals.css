@@ -1,0 +1,196 @@
+/* ===== MODO ESCURO (padrão) ===== */
+:root, [data-theme="dark"] {
+  --background: #050a15; 
+  --foreground: #ffffff;
+  
+  --primary: #00ff73;
+  --primary-hover: #00cc5c; 
+  --secondary: #00f0ff;
+  
+  --card-bg: rgba(13, 20, 36, 0.85);
+  --card-border: rgba(0, 255, 115, 0.25);
+  
+  --input-bg: #0d1424;
+  --input-border: rgba(0, 255, 115, 0.3);
+  
+  --error: #ff3366;
+  --success: #00ff73; 
+  --warning: #ffcc00;
+  
+  --muted: #94a3b8;         /* Texto secundário no escuro */
+  --chart-axis: #64748b;    /* Eixos do gráfico */
+  --tooltip-bg: #0d1424;    /* Fundo do tooltip */
+  --meal-bg: rgba(255, 255, 255, 0.04); /* Card de refeição */
+  
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* ===== MODO CLARO ===== */
+[data-theme="light"] {
+  --background: #f0fdf4;
+  --foreground: #0f172a;
+  
+  --primary: #16a34a;
+  --primary-hover: #15803d;
+  --secondary: #0891b2;
+  
+  --card-bg: rgba(255, 255, 255, 0.85);
+  --card-border: rgba(22, 163, 74, 0.3);
+  
+  --input-bg: #ffffff;
+  --input-border: rgba(22, 163, 74, 0.4);
+  
+  --error: #dc2626;
+  --success: #16a34a;
+  --warning: #d97706;
+
+  --muted: #374151;         /* Texto secundário no claro (escuro o suficiente) */
+  --chart-axis: #374151;    /* Eixos do gráfico visíveis no branco */
+  --tooltip-bg: #ffffff;    /* Fundo do tooltip branco */
+  --meal-bg: rgba(0, 0, 0, 0.04); /* Card de refeição no light */
+}
+
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+body {
+  background-color: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Typography utilities */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  margin-bottom: 0.5rem;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Glassmorphism Card Utility */
+.glass-card {
+  background: var(--card-bg);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: 2rem;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+@media (max-width: 640px) {
+  .glass-card {
+    padding: 1.25rem;
+    border-radius: 12px;
+  }
+  
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.25rem !important; }
+}
+
+/* Form Styles */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.5rem;
+}
+
+.input-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  color: var(--muted);
+}
+
+.input-field {
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--foreground);
+  padding: 0.75rem 1rem;
+  border-radius: 8px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.input-field:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+/* Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.btn-primary {
+  background-color: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active {
+  transform: translateY(0);
+}
+
+/* Container */
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+  width: 100%;
+}
+
+/* Helpers */
+.text-center { text-align: center; }
+.mb-2 { margin-bottom: 0.5rem; }
+.mb-4 { margin-bottom: 1rem; }
+.mt-4 { margin-top: 1rem; }
+.mt-8 { margin-top: 2rem; }
+
+/* ===== PRINT STYLES ===== */
+@media print {
+  .print-hide {
+    display: none !important;
+  }
+  
+  body {
+    background: white;
+    color: black;
+  }
+  
+  .glass-card {
+    border: 1px solid #ccc;
+    box-shadow: none;
+    background: transparent;
+  }
+  
+  * {
+    color: black !important;
+  }
+}

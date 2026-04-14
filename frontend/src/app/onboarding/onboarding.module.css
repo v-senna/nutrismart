@@ -1,0 +1,90 @@
+.container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.05), transparent 40%);
+}
+
+.wizardCard {
+  width: 100%;
+  max-width: 650px;
+}
+
+.stepIndicator {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+}
+
+.step {
+  flex: 1;
+  text-align: center;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #334155;
+  color: #64748b;
+  font-weight: 500;
+  font-size: 0.875rem;
+  transition: all 0.3s ease;
+}
+
+.stepActive {
+  border-bottom-color: var(--primary);
+  color: var(--primary);
+}
+
+.buttonGroup {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 2rem;
+}
+
+.btnOutline {
+  background: transparent;
+  border: 1px solid var(--input-border);
+  color: white;
+}
+
+.btnOutline:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.rowGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.radioGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.radioLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem;
+  border: 1px solid var(--input-border);
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--input-bg);
+  transition: all 0.2s;
+}
+
+.radioLabel:hover {
+  border-color: rgba(16, 185, 129, 0.5);
+}
+
+.radioLabel input:checked {
+  accent-color: var(--primary);
+}
+
+@media (max-width: 600px) {
+  .rowGrid {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+}
