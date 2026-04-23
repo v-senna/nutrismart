@@ -10,7 +10,7 @@ echo.
 
 REM ---- BACKEND ----
 echo  [1/2] Iniciando Backend na porta 8001...
-start "NutriSmart BACKEND" cmd /k "cd /d "%~dp0..\backend" && venv\Scripts\python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001"
+start "NutriSmart BACKEND" cmd /k "cd /d "%~dp0..\frontend\backend" && venv\Scripts\python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001"
 
 echo  Aguardando backend iniciar (pode levar alguns segundos)...
 echo.

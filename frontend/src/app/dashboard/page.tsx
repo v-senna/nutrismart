@@ -27,7 +27,9 @@ import {
   ArrowRight,
   Hand,
   ChevronDown,
-  ChevronUp
+  ChevronUp,
+  Bell,
+  Droplets
 } from "lucide-react";
 import styles from "./dashboard.module.css";
 
@@ -258,6 +260,30 @@ export default function DashboardPage() {
 
   const hasRealData = filteredData.some((d) => d.real !== undefined);
 
+  // Helper to find current/next meal
+  const currentMealInfo = useMemo(() => {
+    if (!meals.length) return null;
+    const now = new Date();
+    const currentHour = now.getHours();
+    const currentMinute = now.getMinutes();
+    const currentTimeMinutes = currentHour * 60 + currentMinute;
+
+    let closest = meals[0];
+    let minDiff = Infinity;
+
+    meals.forEach(m => {
+      const [h, min] = m.time.split(':').map(Number);
+      const mealTimeMinutes = h * 60 + min;
+      const diff = Math.abs(currentTimeMinutes - mealTimeMinutes);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = m;
+      }
+    });
+
+    return { meal: closest, isTime: minDiff <= 45, diff: minDiff };
+  }, [meals]);
+
   return (
     <div className={styles.container}>
       <div className="container">
@@ -315,6 +341,72 @@ export default function DashboardPage() {
             >
               <LogOut size={18} /> Sair
             </button>
+          </div>
+        </div>
+
+        {/* Smart Notifications */}
+        <div style={{ marginBottom: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
+          {currentMealInfo && currentMealInfo.isTime && (
+            <div className="glass-card" style={{ 
+              padding: "1rem", 
+              border: "2px solid var(--primary)", 
+              background: "rgba(16, 185, 129, 0.05)",
+              display: "flex",
+              gap: "1rem",
+              alignItems: "center"
+            }}>
+              <div style={{ 
+                width: "80px", 
+                height: "80px", 
+                borderRadius: "12px", 
+                overflow: "hidden",
+                flexShrink: 0
+              }}>
+                <img 
+                  src={
+                    currentMealInfo.meal.label.toUpperCase().includes("CAFÉ") ? "/images/cafe.png" :
+                    currentMealInfo.meal.label.toUpperCase().includes("ALMOÇO") ? "/images/almoco.png" :
+                    currentMealInfo.meal.label.toUpperCase().includes("JANTAR") ? "/images/jantar.png" :
+                    "/images/lanche.png"
+                  } 
+                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                />
+              </div>
+              <div>
+                <h3 style={{ fontSize: "0.9rem", color: "var(--primary)", margin: 0, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <Bell size={16} /> HORA DE COMER! ({currentMealInfo.meal.time})
+                </h3>
+                <p style={{ fontWeight: "bold", fontSize: "1.1rem", margin: "0.2rem 0" }}>{currentMealInfo.meal.label}</p>
+                <p style={{ fontSize: "0.85rem", color: "var(--muted)", margin: 0 }}>{currentMealInfo.meal.suggestion}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="glass-card" style={{ 
+            padding: "1rem", 
+            border: "1px solid var(--secondary)", 
+            background: "rgba(99, 102, 241, 0.05)",
+            display: "flex",
+            gap: "1rem",
+            alignItems: "center"
+          }}>
+            <div style={{ 
+              width: "50px", 
+              height: "50px", 
+              borderRadius: "50%", 
+              background: "var(--secondary)", 
+              display: "flex", 
+              alignItems: "center", 
+              justifyContent: "center",
+              color: "white"
+            }}>
+              <Droplets size={24} />
+            </div>
+            <div>
+              <h3 style={{ fontSize: "0.9rem", color: "var(--secondary)", margin: 0 }}>HIDRATAÇÃO</h3>
+              <p style={{ fontWeight: "bold", fontSize: "1rem", margin: 0 }}>Beba 300ml de água agora</p>
+              <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>Meta diária: {((plan.water_recommendation || 0)/1000).toFixed(1)}L</p>
+            </div>
           </div>
         </div>
 
@@ -684,16 +776,16 @@ export default function DashboardPage() {
               {meals.map((meal: any, idx: number) => {
                 const mealLabel = meal.label.toUpperCase();
                 const mealImages: Record<string, string> = {
-                  "CAFÉ DA MANHÃ": "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&q=80&w=400",
-                  "ALMOÇO": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&q=80&w=400",
-                  "JANTAR": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=400",
-                  "LANCHE DA MANHÃ": "https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=400",
-                  "LANCHE DA TARDE": "https://images.unsplash.com/photo-1574316071802-0d684efa7bf5?auto=format&fit=crop&q=80&w=400",
-                  "CEIA": "/ceia.png",
-                  "PRÉ-TREINO": "https://images.unsplash.com/photo-1550345332-09e3ac987658?auto=format&fit=crop&q=80&w=400",
-                  "PÓS-TREINO": "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&q=80&w=400",
+                  "CAFÉ DA MANHÃ": "/images/cafe.png",
+                  "ALMOÇO": "/images/almoco.png",
+                  "JANTAR": "/images/jantar.png",
+                  "LANCHE DA MANHÃ": "/images/lanche.png",
+                  "LANCHE DA TARDE": "/images/lanche.png",
+                  "CEIA": "/images/ceia.png",
+                  "PRÉ-TREINO": "/images/pre_treino.png",
+                  "PÓS-TREINO": "/images/lanche.png", // Reuse lanche as pos-treino quota was exhausted
                 };
-                const imageUrl = mealImages[mealLabel] || "https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&q=80&w=400";
+                const imageUrl = mealImages[mealLabel] || "/images/lanche.png";
 
                 return (
                   <div
