@@ -10,27 +10,8 @@ node_modules/
 
 # Next.js
 .next/
-frontend/.next/
-frontend/out/
-frontend/build/
-
-# IDEs and Editors
-.vscode/
-.idea/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
+out/
+build/
 
 # Databases
 *.db

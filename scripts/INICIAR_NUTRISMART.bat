@@ -10,7 +10,7 @@ echo.
 
 REM ---- BACKEND ----
 echo  [1/2] Iniciando Backend na porta 8001...
-start "NutriSmart BACKEND" cmd /k "cd /d "%~dp0..\frontend\backend" && venv\Scripts\python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001"
+start "NutriSmart BACKEND" cmd /k "cd /d "%~dp0..\backend" && venv\Scripts\python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001"
 
 echo  Aguardando backend iniciar (pode levar alguns segundos)...
 echo.
@@ -45,7 +45,7 @@ echo  [OK] Backend respondendo!
 :INICIA_FRONTEND
 echo.
 echo  [2/2] Iniciando Frontend na porta 3001...
-start "NutriSmart FRONTEND" cmd /k "cd /d "%~dp0..\frontend" && npm run dev -- -p 3001 -H 0.0.0.0"
+start "NutriSmart FRONTEND" cmd /k "cd /d "%~dp0.." && npm run dev -- -p 3001 -H 0.0.0.0"
 
 echo  Aguardando frontend compilar (pode levar 10-15s na primeira vez)...
 timeout /t 12 /nobreak > nul

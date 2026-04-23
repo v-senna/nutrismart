@@ -29,6 +29,7 @@ import {
   ChevronDown,
   ChevronUp,
   Bell,
+  BellOff,
   Droplet
 } from "lucide-react";
 import styles from "./dashboard.module.css";
@@ -260,9 +261,11 @@ export default function DashboardPage() {
 
   const hasRealData = filteredData.some((d) => d.real !== undefined);
 
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
   // Helper to find current/next meal
   const currentMealInfo = useMemo(() => {
-    if (!meals.length) return null;
+    if (!meals.length || !notificationsEnabled) return null;
     const now = new Date();
     const currentHour = now.getHours();
     const currentMinute = now.getMinutes();
@@ -329,6 +332,19 @@ export default function DashboardPage() {
               }}
             >
               <Settings size={18} /> Refazer / Ajustar Plano
+            </button>
+            <button
+              onClick={() => setNotificationsEnabled(!notificationsEnabled)}
+              className="btn flex items-center gap-2"
+              style={{
+                background: notificationsEnabled ? "rgba(16, 185, 129, 0.1)" : "rgba(239, 68, 68, 0.1)",
+                border: `1px solid ${notificationsEnabled ? "var(--primary)" : "var(--error)"}`,
+                color: notificationsEnabled ? "var(--primary)" : "var(--error)",
+                fontWeight: "bold"
+              }}
+            >
+              {notificationsEnabled ? <Bell size={18} /> : <BellOff size={18} />}
+              {notificationsEnabled ? "Alertas: ON" : "Alertas: OFF"}
             </button>
             <button
               onClick={handleLogout}
