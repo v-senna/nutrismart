@@ -1,3 +1,3 @@
 @echo off
-cd /d "%~dp0scripts"
+title NutriSmart - Start
 call INICIAR_NUTRISMART.bat

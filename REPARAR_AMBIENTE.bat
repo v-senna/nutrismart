@@ -9,12 +9,12 @@ echo ========================================
 echo.
 
 echo [1/3] Removendo venv antiga...
-if exist "%~dp0..\backend\venv" (
-    rmdir /s /q "%~dp0..\backend\venv"
+if exist "%~dp0backend\venv" (
+    rmdir /s /q "%~dp0backend\venv"
 )
 
 echo [2/3] Criando nova venv...
-cd /d "%~dp0..\backend"
+cd /d "%~dp0backend"
 python -m venv venv
 
 echo [3/3] Instalando dependencias...
