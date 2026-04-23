@@ -38,7 +38,7 @@ export default function LoginPage() {
   return (
     <div className={styles.container}>
       <div className={`glass-card ${styles.loginCard}`}>
-        <h1 className="text-center mb-2 text-3xl font-bold">NutriSmart</h1>
+        <h1 className="text-center mb-2 text-3xl font-bold">🍏 NutriSmart</h1>
         <p className="text-center mb-8 text-gray-400">Entre na sua conta para acessar seus dados</p>
 
         {error && <div className={styles.errorMessage}>{error}</div>}
@@ -71,7 +71,7 @@ export default function LoginPage() {
           </div>
 
           <button type="submit" className={`btn btn-primary w-full mt-4`} disabled={loading}>
-            {loading ? "Entrando..." : "Entrar"}
+            {loading ? "🔑 Entrando..." : "🔓 Entrar"}
           </button>
         </form>
 

@@ -7,17 +7,14 @@ def calculate_tmb(weight: float, height: float, age: int, gender: str) -> float:
         return base - 161
 
 def get_bmi_classification(bmi: float, age: int) -> str:
-    """Classificação de IMC baseada na idade (HAS para idosos, OMS para adultos/crianças)."""
-    if age > 65:
-        # Haute Autorité de Santé (HAS), França
-        if bmi < 21: return "Desnutrição (< 21 kg/m²) — HAS Idoso"
-        if bmi < 25: return "Normal (21–24.9 kg/m²) — HAS Idoso"
-        if bmi < 30: return "Sobrepeso (25–29.9 kg/m²) — HAS Idoso"
-        return "Obesidade (≥30.0 kg/m²) — HAS Idoso"
+    """Classificação de IMC atualizada (OPAS para idosos, OMS para adultos/crianças)."""
+    if age >= 60:
+        # Padrão OPAS/SBC para Idosos
+        if bmi < 22: return "Baixo peso (< 22 kg/m²) — Idoso"
+        if bmi <= 27: return "Peso adequado (22–27 kg/m²) — Idoso"
+        return "Sobrepeso (> 27 kg/m²) — Idoso"
     elif age >= 2 and age < 20:
         # OMS Escore-Z simplificado (2–19 anos)
-        # Referência: OMS 2007 Growth Reference
-        # Como o cálculo real exige tabelas LMS, usamos referência orientativa
         if bmi < 13.5: return "Magreza Acentuada (Escore-Z < -3) — OMS Infantil"
         if bmi < 15.5: return "Magreza (Escore-Z entre -3 e -2) — OMS Infantil"
         if bmi < 22:   return "Peso Normal (Escore-Z entre -2 e +1) — OMS Infantil"
@@ -25,13 +22,13 @@ def get_bmi_classification(bmi: float, age: int) -> str:
         if bmi < 30:   return "Obesidade (Escore-Z entre +2 e +3) — OMS Infantil"
         return "Obesidade Grave (Escore-Z > +3) — OMS Infantil"
     else:
-        # OMS Adulto Padrão
-        if bmi < 18.5: return "Baixo peso"
+        # Tabela OMS / ABESO (Adulto)
+        if bmi < 18.5: return "Abaixo do peso"
         if bmi < 25: return "Peso normal"
         if bmi < 30: return "Sobrepeso"
         if bmi < 35: return "Obesidade Grau I"
         if bmi < 40: return "Obesidade Grau II"
-        return "Obesidade Grau III"
+        return "Obesidade Grau III (Mórbida)"
 
 def get_tdee(tmb: float, activity_level: str) -> float:
     multipliers = {
@@ -53,7 +50,7 @@ def calculate_plan(profile) -> dict:
         target_calories = tdee - 500
         protein = profile.weight * 2.2 # Mais proteína para conservar massa
         fat = profile.weight * 1.0
-    elif profile.goals == "Hipertrofia":
+    elif profile.goals == "Hipertrofia" or profile.goals == "Ganho de Massa Muscular":
         target_calories = tdee + 300
         protein = profile.weight * 2.0
         fat = profile.weight * 1.0
@@ -174,37 +171,37 @@ def calculate_plan(profile) -> dict:
     if interval > 4.0:
         if interval > 6.0:
              alerts_and_tips.append(
-                "⚠️ **ALERTA CRÍTICO DE RISCO**: Seu intervalo de " + str(round(interval, 1)) + "h entre refeições entra em 'Estado de Inanição'. "
+                "**ALERTA CRÍTICO DE RISCO**: Seu intervalo de " + str(round(interval, 1)) + "h entre refeições entra em 'Estado de Inanição'. "
                 "Cientificamente, isso dispara o cortisol e silencia a queima de gordura, forçando o corpo a estocar tecido adiposo visceral "
                 "como reserva de emergência e canibalizar massa muscular para obter glicose."
             )
         else:
             alerts_and_tips.append(
-                "⚠️ **ALERTA METABÓLICO**: O intervalo de " + str(round(interval, 1)) + "h excede o limite de eficiência. "
+                "**ALERTA METABÓLICO**: O intervalo de " + str(round(interval, 1)) + "h excede o limite de eficiência. "
                 "Estudos indicam que após 4h sem nutrientes, o metabolismo desacelera significativamente para poupar energia, "
                 "facilitando o ganho de gordura na próxima refeição devido ao pico exagerado de insulina."
             )
 
     # 2. Smart Tips based on BMI - usando limiares corretos por faixa etária
     age_val = getattr(profile, 'age', 30) or 30
-    imc_low = 21 if age_val > 65 else (15.5 if age_val < 20 else 18.5)
+    imc_low = 22 if age_val >= 60 else (15.5 if age_val < 20 else 18.5)
     imc_high = 30
 
     if imc > imc_high:
-        alerts_and_tips.append("💡 **DICA DE SAÚDE**: Seu IMC indica sobrecarga articular. Priorize atividades de baixo impacto e foque no consumo de fibras para controle glicêmico.")
+        alerts_and_tips.append("**DICA DE SAÚDE**: Seu IMC indica sobrecarga articular. Priorize atividades de baixo impacto e foque no consumo de fibras para controle glicêmico.")
     elif imc < imc_low:
-        if age_val > 65:
-            alerts_and_tips.append("💡 **ALERTA - DESNUTRIÇÃO (HAS)**: IMC abaixo de 21 em pessoas com mais de 65 anos indica risco de desnutrição segundo a Haute Autorité de Santé. Busque orientação médica e aumente o aporte proteico.")
+        if age_val >= 60:
+            alerts_and_tips.append("**ALERTA - BAIXO PESO (OPAS)**: IMC abaixo de 22 em pessoas com mais de 60 anos indica risco de desnutrição e sarcopenia segundo a OPAS. Busque orientação médica e aumente o aporte proteico.")
         elif age_val < 20:
-            alerts_and_tips.append("💡 **DICA INFANTIL (OMS)**: IMC baixo para a faixa etária. Avalie com Escore-Z por um profissional de saúde para verificar estado nutricional adequado.")
+            alerts_and_tips.append("**DICA INFANTIL (OMS)**: IMC baixo para a faixa etária. Avalie com Escore-Z por um profissional de saúde para verificar estado nutricional adequado.")
         else:
-            alerts_and_tips.append("💡 **DICA DE PERFORMANCE**: Seu IMC atual sugere a necessidade de superavit proteico. Não pule refeições para evitar o catabolismo muscular.")
+            alerts_and_tips.append("**DICA DE PERFORMANCE**: Seu IMC atual sugere a necessidade de superavit proteico. Não pule refeições para evitar o catabolismo muscular.")
     
     # 3. Smart Tips based on Goals
     if profile.goals == "Emagrecimento":
-        alerts_and_tips.append("💡 **ESTRATÉGIA**: Beba 500ml de água antes das refeições principais. Isso pode aumentar o gasto calórico em repouso em até 30% nos 60 minutos seguintes.")
-    elif profile.goals == "Hipertrofia":
-        alerts_and_tips.append("💡 **ESTRATÉGIA**: A síntese proteica é otimizada com a ingestão a cada 4 horas. Seu intervalo atual é de " + str(round(interval, 1)) + "h.")
+        alerts_and_tips.append("**ESTRATÉGIA**: Beba 500ml de água antes das refeições principais. Isso pode aumentar o gasto calórico em repouso em até 30% nos 60 minutos seguintes.")
+    elif profile.goals == "Hipertrofia" or profile.goals == "Ganho de Massa Muscular":
+        alerts_and_tips.append("**ESTRATÉGIA**: A síntese proteica é otimizada com a ingestão a cada 4 horas. Seu intervalo atual é de " + str(round(interval, 1)) + "h.")
 
     # 4. Integrate with General Tips
     import random
@@ -234,14 +231,14 @@ def calculate_plan(profile) -> dict:
         rate = 0
         if profile.goals == "Emagrecimento" and diff < 0:
             rate = -0.8 / 7 
-        elif profile.goals == "Hipertrofia" and diff > 0:
+        elif (profile.goals == "Hipertrofia" or profile.goals == "Ganho de Massa Muscular") and diff > 0:
             rate = 0.5 / 7
             
         target = profile.target_weight
         
         if rate == 0:
             # Forçar uma tendência se o objetivo for definido, mesmo sem meta clara
-            if profile.goals == "Hipertrofia":
+            if profile.goals == "Hipertrofia" or profile.goals == "Ganho de Massa Muscular":
                 rate = 0.5 / 7 # 500g por semana
             elif profile.goals == "Emagrecimento":
                 rate = -0.7 / 7 # 700g por semana
@@ -290,7 +287,7 @@ def calculate_plan(profile) -> dict:
             })
     else:
         # Default rate based on goal if no target weight set or it's equal to current weight
-        if profile.goals == "Hipertrofia":
+        if profile.goals == "Hipertrofia" or profile.goals == "Ganho de Massa Muscular":
             rate = 0.5 / 7
         elif profile.goals == "Emagrecimento":
             rate = -0.7 / 7
@@ -332,65 +329,82 @@ def recalculate_projection_with_logs(profile, weight_logs: list) -> str:
     import json
     from datetime import datetime, timedelta
 
-    dias_semana_full = ["segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado", "domingo"]
+    dias_semana_full = ["domingo", "segunda-feira", "terça-feira", "quarta-feira", "quinta-feira", "sexta-feira", "sábado"]
+    
+    # Ajustar para o fuso horário local (UTC-3)
     now_utc = datetime.utcnow()
     now_local = now_utc - timedelta(hours=3)
-    start_date = now_local.replace(hour=0, minute=0, second=0, microsecond=0) + timedelta(days=1)
-
-    target_weight = getattr(profile, 'target_weight', None) or profile.weight
+    # HOJE é o dia 0
+    today_start = now_local.replace(hour=0, minute=0, second=0, microsecond=0)
+    
+    # Usar o peso inicial do perfil se não houver logs, ou o peso do perfil como o mais recente
+    current_weight = profile.weight
+    target_weight = getattr(profile, 'target_weight', None) or (current_weight - 5 if profile.goals == "Emagrecimento" else current_weight + 5)
 
     if profile.goals == "Emagrecimento":
         rate = -0.8 / 7
-    elif profile.goals == "Hipertrofia":
+    elif profile.goals == "Hipertrofia" or profile.goals == "Ganho de Massa Muscular":
         rate = 0.5 / 7
     else:
         rate = 0.0
 
-    if target_weight == profile.weight:
-        duration_months = getattr(profile, 'project_duration_months', 12) or 12
-        target_weight = profile.weight + (rate * duration_months * 30)
-
     duration_months = getattr(profile, 'project_duration_months', 12) or 12
-    total_days_limit = duration_months * 30
-    days_to_target = int(abs((target_weight - profile.weight) / (rate * 7)) * 7) if rate != 0 else total_days_limit
-    if days_to_target <= 0:
-        days_to_target = total_days_limit
+    total_days = duration_months * 30
+    
+    # Se o objetivo for alcançado, a taxa vira 0 (manutenção)
+    if (profile.goals == "Emagrecimento" and current_weight <= target_weight) or \
+       ((profile.goals == "Hipertrofia" or profile.goals == "Ganho de Massa Muscular") and current_weight >= target_weight):
+        rate = 0.0
 
-    # Build dict: day_offset -> real weight from log
+    # Determinar quantos dias faltam para a meta a partir de HOJE
+    if rate != 0:
+        days_to_target = int(abs((target_weight - current_weight) / (rate * 7)) * 7)
+    else:
+        days_to_target = total_days
+
+    # Mapear logs: encontrar o OFFSET de cada log em relação a HOJE
     log_by_day = {}
     for log in weight_logs:
         log_local = log.logged_at - timedelta(hours=3)
         log_date = log_local.replace(hour=0, minute=0, second=0, microsecond=0)
-        delta = (log_date - start_date).days + 1
-        log_by_day[delta] = round(log.weight, 1)
+        # Offset em relação a hoje (pode ser negativo para logs passados)
+        offset = (log_date - today_start).days
+        log_by_day[offset] = round(log.weight, 1)
 
     projection_data = []
-    duration_months = getattr(profile, 'project_duration_months', 12) or 12
-    total_days = duration_months * 30
-
-    for d in range(0, total_days):
-        current_date = start_date + timedelta(days=d)
-        proj_w = profile.weight + (rate * d)
-
-        if d <= days_to_target:
-            ideal_trend = profile.weight + ((target_weight - profile.weight) / days_to_target * d)
+    
+    # Mostrar um pouco do passado (-7 dias) e o futuro (total_days)
+    for d in range(-7, total_days):
+        current_date_obj = today_start + timedelta(days=d)
+        
+        # Tendência ideal (reta que liga o peso atual à meta futura)
+        if d < 0:
+            # No passado, projetamos para trás a partir do peso atual
+            proj_w = current_weight - (rate * abs(d))
+            ideal_trend = current_weight - (rate * abs(d))
         else:
-            ideal_trend = target_weight
-
-        if (rate < 0 and proj_w > target_weight) or (rate > 0 and proj_w < target_weight) or rate == 0:
-            current_proj = proj_w
-        else:
-            current_proj = target_weight
+            # No futuro, projetamos a partir do peso atual
+            if d <= days_to_target:
+                proj_w = current_weight + (rate * d)
+                ideal_trend = current_weight + ((target_weight - current_weight) / max(1, days_to_target) * d)
+            else:
+                proj_w = target_weight
+                ideal_trend = target_weight
 
         entry = {
             "day": d,
-            "date": f"{current_date.strftime('%d/%m')} {dias_semana_full[current_date.weekday()]}",
-            "weight": round(current_proj, 1),
+            "date": f"{current_date_obj.strftime('%d/%m')} {dias_semana_full[current_date_obj.weekday()]}",
+            "weight": round(proj_w, 1),
             "target": round(target_weight, 1),
             "trend": round(ideal_trend, 1),
         }
+        
+        # Injetar peso real se existir log para esse dia
         if d in log_by_day:
             entry["real"] = log_by_day[d]
+        elif d == 0:
+            # No dia 0 (Hoje), o peso real é o peso atual do perfil
+            entry["real"] = round(current_weight, 1)
 
         projection_data.append(entry)
 

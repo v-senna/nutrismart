@@ -16,7 +16,7 @@ export const fetchApi = async (endpoint: string, options: RequestInit = {}) => {
     });
   } catch (networkErr) {
     throw new Error(
-      "Não foi possível conectar ao servidor. Verifique se o backend está rodando (porta 8000)."
+      "Não foi possível conectar ao servidor. Verifique se o backend está rodando (porta 8001)."
     );
   }
 

@@ -7,14 +7,14 @@ echo       NutriSmart - Parando Servidores
 echo ============================================
 echo.
 
-echo Encerrando processos nas portas 8000 e 3000...
+echo Encerrando processos nas portas 8001 e 3001...
 
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8000" ^| findstr "LISTENING"') do (
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":8001" ^| findstr "LISTENING"') do (
     echo Encerrando Backend (PID %%a)...
     taskkill /F /PID %%a > nul 2>&1
 )
 
-for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3000" ^| findstr "LISTENING"') do (
+for /f "tokens=5" %%a in ('netstat -aon ^| findstr ":3001" ^| findstr "LISTENING"') do (
     echo Encerrando Frontend (PID %%a)...
     taskkill /F /PID %%a > nul 2>&1
 )

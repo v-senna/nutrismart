@@ -51,9 +51,9 @@ venv\Scripts\activate
 pip install -r requirements.txt
 
 # Inicie o servidor FastAPI local
-uvicorn main:app --reload --port 8000
+uvicorn main:app --reload --port 8001
 ```
-Isso iniciará o back-end na URL: `http://localhost:8000`.
+Isso iniciará o back-end na URL: `http://localhost:8001`.
 
 ### 4. Executando o Frontend (Web App)
 Abra **outra** janela de terminal, deixando o servidor do backend rodando na primeira.
@@ -68,7 +68,7 @@ npm install
 # Inicie o servidor de desenvolvimento
 npm run dev
 ```
-O frontend começará a rodar e você poderá acessar a aplicação em: `http://localhost:3000`.
+O frontend começará a rodar e você poderá acessar a aplicação em: `http://localhost:3001`.
 
 ---
 Feito com 💚 para quem busca mais inteligência na nutrição.

@@ -12,6 +12,23 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
+import { 
+  FileText, 
+  Settings, 
+  LogOut, 
+  TrendingUp, 
+  BarChart4, 
+  Dna, 
+  Utensils, 
+  RefreshCw, 
+  AlertTriangle, 
+  Lightbulb,
+  ArrowLeft,
+  ArrowRight,
+  Hand,
+  ChevronDown,
+  ChevronUp
+} from "lucide-react";
 import styles from "./dashboard.module.css";
 
 // ---------------------
@@ -256,8 +273,8 @@ export default function DashboardPage() {
           }}
         >
           <div>
-            <h1 style={{ fontSize: "1.875rem", fontWeight: "bold", margin: 0 }}>
-              {userName ? `Olá, ${userName} 👋` : "Meu Plano Nutricional"}
+            <h1 style={{ fontSize: "1.875rem", fontWeight: "bold", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              {userName ? <>Olá, {userName} <Hand className="text-primary" size={24} /></> : "Meu Plano Nutricional"}
             </h1>
             <p style={{ color: "var(--muted)", fontSize: "0.875rem" }}>
               Evolução e metas personalizadas
@@ -266,7 +283,7 @@ export default function DashboardPage() {
           <div style={{ display: "flex", gap: "1rem" }} className="print-hide">
             <button
               onClick={() => window.print()}
-              className="btn"
+              className="btn flex items-center gap-2"
               style={{
                 background: "var(--card-bg)",
                 border: "1px solid var(--card-border)",
@@ -274,29 +291,29 @@ export default function DashboardPage() {
                 fontWeight: "bold",
               }}
             >
-              📄 Exportar PDF
+              <FileText size={18} /> Exportar em PDF
             </button>
             <button
               onClick={handleRefazer}
-              className="btn"
+              className="btn flex items-center gap-2"
               style={{
                 background: "var(--primary)",
-                color: "var(--bg-dark)",
+                color: "var(--primary-foreground)",
                 fontWeight: "bold",
               }}
             >
-              Refazer / Ajustar Plano
+              <Settings size={18} /> Refazer / Ajustar Plano
             </button>
             <button
               onClick={handleLogout}
-              className="btn"
+              className="btn flex items-center gap-2"
               style={{
                 background: "transparent",
                 border: "1px solid var(--primary)",
                 color: "var(--primary)",
               }}
             >
-              Sair
+              <LogOut size={18} /> Sair
             </button>
           </div>
         </div>
@@ -314,8 +331,8 @@ export default function DashboardPage() {
                 gap: "0.75rem",
               }}
             >
-              <h2 style={{ fontSize: "1.25rem", color: "var(--primary)", margin: 0 }}>
-                Evolução do Plano
+              <h2 style={{ fontSize: "1.25rem", color: "var(--primary)", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <TrendingUp size={20} /> Evolução do Plano
               </h2>
               <div className={styles.tabs}>
                 {(["day", "week", "month", "year"] as const).map((m) => (
@@ -359,7 +376,7 @@ export default function DashboardPage() {
                       color: "var(--foreground)",
                     }}
                     labelStyle={{ color: "var(--foreground)", fontWeight: "bold", marginBottom: "4px" }}
-                    formatter={(value: any, name: string) => {
+                    formatter={(value: any, name: any) => {
                       const labels: Record<string, string> = {
                         weight: "Projeção (kg)",
                         real: "Peso Real (kg)",
@@ -397,8 +414,8 @@ export default function DashboardPage() {
 
         {/* --- Weight Log Panel --- */}
         <div className="glass-card" style={{ marginBottom: "2rem" }}>
-          <h2 style={{ fontSize: "1.25rem", color: "var(--primary)", marginBottom: "1rem" }}>
-            📊 Registrar Peso Atual
+          <h2 style={{ fontSize: "1.25rem", color: "var(--primary)", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+            <BarChart4 size={20} /> Registrar Peso Atual
           </h2>
           <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginBottom: "1rem" }}>
             Informe seu peso periodicamente para o sistema recalcular sua projeção com dados reais.
@@ -450,7 +467,7 @@ export default function DashboardPage() {
               disabled={logSubmitting}
               style={{
                 background: "var(--primary)",
-                color: "black",
+                color: "var(--primary-foreground)",
                 border: "none",
                 borderRadius: "8px",
                 padding: "0.65rem 1.5rem",
@@ -530,8 +547,8 @@ export default function DashboardPage() {
         <div className={styles.dashboardGrid}>
           {/* Summary Column */}
           <div className="glass-card">
-            <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem", color: "var(--primary)" }}>
-              Resumo Biológico
+            <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Dna size={20} /> Resumo Biológico
             </h2>
             {[
               { label: "IMC", value: plan.imc },
@@ -592,8 +609,8 @@ export default function DashboardPage() {
                   paddingBottom: "0.4rem",
                 }}
               >
-                <h3 style={{ fontSize: "1rem", color: tipsList[currentTipIndex]?.startsWith("⚠️") ? "#f87171" : "var(--primary)", margin: 0 }}>
-                  {tipsList[currentTipIndex]?.startsWith("⚠️") ? "ALERTA DE SAÚDE" : "Dicas do Dia"}{" "}
+                <h3 style={{ fontSize: "1rem", color: tipsList[currentTipIndex]?.startsWith("⚠️") ? "#f87171" : "var(--primary)", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  {tipsList[currentTipIndex]?.startsWith("⚠️") ? <><AlertTriangle size={18} /> ALERTA DE SAÚDE</> : <><Lightbulb size={18} /> Dicas do Dia</>}{" "}
                   {isHovering && (
                     <span style={{ fontSize: "0.6rem", color: "#94a3b8", marginLeft: "0.5rem" }}>
                       (Pausado)
@@ -602,14 +619,10 @@ export default function DashboardPage() {
                 </h3>
                 <div className={styles.carouselControls}>
                   <button className={styles.carouselBtn} onClick={prevTip} title="Anterior">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="15 18 9 12 15 6"></polyline>
-                    </svg>
+                    <ArrowLeft size={16} />
                   </button>
                   <button className={styles.carouselBtn} onClick={nextTip} title="Próximo">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="9 18 15 12 9 6"></polyline>
-                    </svg>
+                    <ArrowRight size={16} />
                   </button>
                 </div>
               </div>
@@ -664,87 +677,130 @@ export default function DashboardPage() {
 
           {/* Meals Column */}
           <div className="glass-card">
-            <h2 style={{ fontSize: "1.25rem", marginBottom: "1.5rem", color: "var(--primary)" }}>
-              Planejamento de Refeições
+            <h2 style={{ fontSize: "1.25rem", marginBottom: "1.5rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Utensils size={20} /> Planejamento de Refeições
             </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {meals.map((meal: any, idx: number) => (
-                <div
-                  key={idx}
-                  className={styles.mealCard}
-                  style={{
-                    background: "var(--meal-bg)",
-                    padding: "1rem",
-                    borderRadius: "12px",
-                    border: "1px solid var(--card-border)",
-                  }}
-                >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                      <div style={{ background: "var(--primary)", color: "black", padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: "bold" }}>
-                        {meal.time}
-                      </div>
-                      <div style={{ fontWeight: "bold", fontSize: "1rem", color: "var(--primary)" }}>
-                        {meal.label.toUpperCase()}
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              {meals.map((meal: any, idx: number) => {
+                const mealLabel = meal.label.toUpperCase();
+                const mealImages: Record<string, string> = {
+                  "CAFÉ DA MANHÃ": "https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&q=80&w=400",
+                  "ALMOÇO": "https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&q=80&w=400",
+                  "JANTAR": "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?auto=format&fit=crop&q=80&w=400",
+                  "LANCHE DA MANHÃ": "https://images.unsplash.com/photo-1596560548464-f010549b84d7?auto=format&fit=crop&q=80&w=400",
+                  "LANCHE DA TARDE": "https://images.unsplash.com/photo-1574316071802-0d684efa7bf5?auto=format&fit=crop&q=80&w=400",
+                  "CEIA": "/ceia.png",
+                  "PRÉ-TREINO": "https://images.unsplash.com/photo-1550345332-09e3ac987658?auto=format&fit=crop&q=80&w=400",
+                  "PÓS-TREINO": "https://images.unsplash.com/photo-1593095948071-474c5cc2989d?auto=format&fit=crop&q=80&w=400",
+                };
+                const imageUrl = mealImages[mealLabel] || "https://images.unsplash.com/photo-1490818387583-1baba5e638af?auto=format&fit=crop&q=80&w=400";
+
+                return (
+                  <div
+                    key={idx}
+                    className={styles.mealCard}
+                    style={{
+                      background: "var(--meal-bg)",
+                      padding: "0",
+                      borderRadius: "16px",
+                      border: "1px solid var(--card-border)",
+                      overflow: "hidden",
+                      transition: "transform 0.2s ease",
+                    }}
+                  >
+                    {/* Imagem Figurativa */}
+                    <div style={{ width: "100%", height: "140px", position: "relative" }}>
+                      <img 
+                        src={imageUrl} 
+                        alt={meal.label} 
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <div style={{ 
+                        position: "absolute", 
+                        bottom: "0", 
+                        left: "0", 
+                        right: "0", 
+                        background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)", 
+                        padding: "1rem",
+                        color: "white"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: "bold", fontSize: "1.1rem", textTransform: "uppercase", letterSpacing: "1px" }}>
+                            {meal.label}
+                          </span>
+                          <span style={{ background: "var(--primary)", color: "black", padding: "0.2rem 0.6rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold" }}>
+                            {meal.time}
+                          </span>
+                        </div>
                       </div>
                     </div>
-                    <button
-                      onClick={() => setMealExpanded(prev => ({ ...prev, [idx]: !prev[idx] }))}
-                      style={{
-                        background: "transparent",
-                        border: "1px solid var(--card-border)",
-                        borderRadius: "8px",
-                        color: "var(--muted)",
-                        fontSize: "0.75rem",
-                        padding: "0.2rem 0.6rem",
-                        cursor: "pointer",
-                        transition: "all 0.2s",
-                      }}
-                      title="Ver opções de troca"
-                    >
-                      {mealExpanded[idx] ? "▲ Ocultar trocas" : "🔄 Ver trocas"}
-                    </button>
-                  </div>
 
-                  <div style={{ marginTop: "0.6rem", fontSize: "0.9rem", color: "var(--foreground)", fontStyle: "italic", background: "var(--input-bg)", padding: "0.5rem", borderRadius: "8px" }}>
-                    {meal.suggestion}
-                  </div>
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
+                        <div style={{ fontSize: "0.95rem", color: "var(--foreground)", fontWeight: "500", lineHeight: "1.5" }}>
+                          {meal.suggestion}
+                        </div>
+                        <button
+                          onClick={() => setMealExpanded(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                          style={{
+                            background: "transparent",
+                            border: "1px solid var(--card-border)",
+                            borderRadius: "8px",
+                            color: "var(--muted)",
+                            fontSize: "0.75rem",
+                            padding: "0.25rem 0.5rem",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.3rem",
+                            flexShrink: 0,
+                            marginLeft: "1rem"
+                          }}
+                        >
+                          {mealExpanded[idx] ? <ChevronUp size={14} /> : <RefreshCw size={12} />}
+                        </button>
+                      </div>
 
-                  {mealExpanded[idx] && (
-                    <div
-                      style={{
-                        marginTop: "0.5rem",
-                        padding: "0.6rem 0.8rem",
-                        background: "rgba(0,255,115,0.05)",
-                        border: "1px solid rgba(0,255,115,0.2)",
-                        borderRadius: "8px",
-                        fontSize: "0.82rem",
-                        color: "var(--foreground)",
-                      }}
-                    >
-                      <span style={{ color: "var(--primary)", fontWeight: "600", display: "block", marginBottom: "0.25rem" }}>🔄 Opções de Troca Similares:</span>
-                      {meal.substitutions ? (
-                        meal.substitutions.split('\n').map((line: string, i: number) => (
-                          <div key={i} style={{ marginBottom: "0.2rem", lineHeight: "1.4" }}>
-                            {line}
+                      {mealExpanded[idx] && (
+                        <div
+                          style={{
+                            marginBottom: "1rem",
+                            padding: "0.75rem",
+                            background: "rgba(0,255,115,0.05)",
+                            border: "1px solid rgba(0,255,115,0.2)",
+                            borderRadius: "8px",
+                            fontSize: "0.82rem",
+                          }}
+                        >
+                          <span style={{ color: "var(--primary)", fontWeight: "600", display: "block", marginBottom: "0.25rem" }}>🔄 Sugestões de Troca:</span>
+                          <div style={{ color: "var(--foreground)", lineHeight: "1.4" }}>
+                            {meal.substitutions ? (
+                              meal.substitutions.split('\n').map((line: string, i: number) => (
+                                <div key={i}>{line}</div>
+                              ))
+                            ) : "Mantenha a proporção de macros com alimentos similares."}
                           </div>
-                        ))
-                      ) : (
-                        <div style={{ lineHeight: "1.4" }}>
-                          Trocar por outra fonte de proteína magra e carboidrato complexo similar.
                         </div>
                       )}
-                    </div>
-                  )}
 
-                  <div style={{ display: "flex", gap: "1rem", fontSize: "0.8rem", color: "var(--muted)", marginTop: "0.5rem" }}>
-                    <span>{meal.calories} kcal</span>
-                    <span>P: <strong style={{ color: "var(--foreground)" }}>{meal.protein}g</strong></span>
-                    <span>C: <strong style={{ color: "var(--foreground)" }}>{meal.carbs}g</strong></span>
-                    <span>G: <strong style={{ color: "var(--foreground)" }}>{meal.fat}g</strong></span>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--card-border)", paddingTop: "0.75rem" }}>
+                        <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.8rem", color: "var(--muted)" }}>
+                          <span>{meal.calories} kcal</span>
+                          <span>P: <strong>{meal.protein}g</strong></span>
+                          <span>C: <strong>{meal.carbs}g</strong></span>
+                          <span>G: <strong>{meal.fat}g</strong></span>
+                        </div>
+                        <div style={{ display: "flex", gap: "2px" }}>
+                          {[...Array(3)].map((_, i) => (
+                            <div key={i} style={{ width: "4px", height: "4px", borderRadius: "50%", background: i === 0 ? "var(--primary)" : "var(--card-border)" }} />
+                          ))}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
@@ -777,6 +833,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>

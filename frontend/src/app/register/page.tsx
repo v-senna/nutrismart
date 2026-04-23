@@ -54,7 +54,7 @@ export default function RegisterPage() {
   return (
     <div className={styles.container}>
       <div className={`glass-card ${styles.registerCard}`}>
-        <h1 className="text-center mb-2 text-3xl font-bold">Criar Conta</h1>
+        <h1 className="text-center mb-2 text-3xl font-bold">✨ Criar Conta</h1>
         <p className="text-center mb-8 text-gray-400">Junte-se ao NutriSmart para planos personalizados.</p>
 
         {error && <div className={styles.errorMessage}>{error}</div>}
@@ -88,7 +88,7 @@ export default function RegisterPage() {
           </div>
 
           <button type="submit" className={`btn btn-primary w-full mt-4`} disabled={loading} style={{ width: '100%' }}>
-            {loading ? "Criando Conta..." : "Começar Minha Jornada"}
+            {loading ? "⌛ Criando Conta..." : "🚀 Começar Minha Jornada"}
           </button>
         </form>
 

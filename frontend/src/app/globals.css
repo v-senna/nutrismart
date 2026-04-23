@@ -22,32 +22,36 @@
   --tooltip-bg: #0d1424;    /* Fundo do tooltip */
   --meal-bg: rgba(255, 255, 255, 0.04); /* Card de refeição */
   
+  --primary-foreground: #050a15; /* Preto no Neon Green */
+  
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* ===== MODO CLARO ===== */
 [data-theme="light"] {
-  --background: #f0fdf4;
-  --foreground: #0f172a;
+  --background: #f8fafc;    /* Slate 50 - Fundo mais limpo e profissional */
+  --foreground: #0f172a;    /* Slate 900 */
   
-  --primary: #16a34a;
-  --primary-hover: #15803d;
-  --secondary: #0891b2;
+  --primary: #10b981;       /* Emerald 500 - Cor vibrante mas profissional */
+  --primary-hover: #059669; /* Emerald 600 */
+  --secondary: #6366f1;     /* Indigo 500 - Contraste elegante com o verde */
   
-  --card-bg: rgba(255, 255, 255, 0.85);
-  --card-border: rgba(22, 163, 74, 0.3);
+  --card-bg: #ffffff;
+  --card-border: #e2e8f0;
   
   --input-bg: #ffffff;
-  --input-border: rgba(22, 163, 74, 0.4);
+  --input-border: #cbd5e1;
   
-  --error: #dc2626;
-  --success: #16a34a;
-  --warning: #d97706;
+  --error: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
 
-  --muted: #374151;         /* Texto secundário no claro (escuro o suficiente) */
-  --chart-axis: #374151;    /* Eixos do gráfico visíveis no branco */
-  --tooltip-bg: #ffffff;    /* Fundo do tooltip branco */
-  --meal-bg: rgba(0, 0, 0, 0.04); /* Card de refeição no light */
+  --primary-foreground: #ffffff; /* Branco no Emerald */
+
+  --muted: #64748b;         /* Slate 500 */
+  --chart-axis: #94a3b8;    /* Slate 400 */
+  --tooltip-bg: #ffffff;
+  --meal-bg: #f1f5f9;       /* Slate 100 */
 }
 
 
@@ -146,7 +150,7 @@ a {
 
 .btn-primary {
   background-color: var(--primary);
-  color: white;
+  color: var(--primary-foreground);
 }
 
 .btn-primary:hover {

@@ -130,12 +130,20 @@ export default function OnboardingPage() {
   return (
     <div className={styles.container}>
       <div className={`glass-card ${styles.wizardCard}`}>
-        <h1 className="text-center mb-2 text-2xl font-bold">Configure seu Perfil</h1>
+        <h1 className="text-center mb-2 text-2xl font-bold flex items-center justify-center gap-2">
+          <ClipboardList className="text-primary" /> Configure seu Perfil
+        </h1>
         
         <div className={styles.stepIndicator}>
-          <div className={`${styles.step} ${step >= 1 ? styles.stepActive : ""}`}>1. Físico</div>
-          <div className={`${styles.step} ${step >= 2 ? styles.stepActive : ""}`}>2. Objetivo</div>
-          <div className={`${styles.step} ${step >= 3 ? styles.stepActive : ""}`}>3. Restrições</div>
+          <div className={`${styles.step} ${step >= 1 ? styles.stepActive : ""}`}>
+            <Ruler size={18} /> 1. Físico
+          </div>
+          <div className={`${styles.step} ${step >= 2 ? styles.stepActive : ""}`}>
+            <Target size={18} /> 2. Objetivo
+          </div>
+          <div className={`${styles.step} ${step >= 3 ? styles.stepActive : ""}`}>
+            <Salad size={18} /> 3. Restrições
+          </div>
         </div>
 
         {error && <div className="text-center mb-4 text-red-500">{error}</div>}
@@ -193,7 +201,7 @@ export default function OnboardingPage() {
                   Emagrecimento (Déficit Calórico)
                 </label>
                 <label className={styles.radioLabel}>
-                  <input type="radio" name="goals" value="Hipertrofia" checked={profile.goals === "Hipertrofia"} onChange={handleProfileChange} />
+                  <input type="radio" name="goals" value="Ganho de Massa Muscular" checked={profile.goals === "Ganho de Massa Muscular"} onChange={handleProfileChange} />
                   Ganho de Massa Muscular (Superávit Calórico)
                 </label>
                 <label className={styles.radioLabel}>
@@ -260,17 +268,17 @@ export default function OnboardingPage() {
         )}
 
         <div className={styles.buttonGroup}>
-          <button type="button" className={`btn ${styles.btnOutline}`} onClick={prevStep} style={{ visibility: step === 1 ? 'hidden' : 'visible' }}>
-            Voltar
+          <button type="button" className={`btn ${styles.btnOutline} flex items-center gap-2`} onClick={prevStep} style={{ visibility: step === 1 ? 'hidden' : 'visible' }}>
+            <ArrowLeft size={18} /> Voltar
           </button>
           
           {step < 3 ? (
-            <button type="button" className="btn btn-primary" onClick={nextStep}>
-              Próximo
+            <button type="button" className="btn btn-primary flex items-center gap-2" onClick={nextStep}>
+              Próximo <ArrowRight size={18} />
             </button>
           ) : (
-            <button type="button" className="btn btn-primary" onClick={submitData} disabled={loading}>
-              {loading ? "Gerando..." : "Finalizar e Gerar Plano"}
+            <button type="button" className="btn btn-primary flex items-center gap-2" onClick={submitData} disabled={loading}>
+              {loading ? <><Rocket className="animate-bounce" size={18} /> Gerando...</> : <><CheckCircle size={18} /> Finalizar e Gerar Plano</>}
             </button>
           )}
         </div>
