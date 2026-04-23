@@ -29,7 +29,7 @@ import {
   ChevronDown,
   ChevronUp,
   Bell,
-  Droplets
+  Droplet
 } from "lucide-react";
 import styles from "./dashboard.module.css";
 
@@ -390,18 +390,18 @@ export default function DashboardPage() {
             gap: "1rem",
             alignItems: "center"
           }}>
-            <div style={{ 
-              width: "50px", 
-              height: "50px", 
-              borderRadius: "50%", 
-              background: "var(--secondary)", 
-              display: "flex", 
-              alignItems: "center", 
-              justifyContent: "center",
-              color: "white"
-            }}>
-              <Droplets size={24} />
-            </div>
+              <div style={{ 
+                width: "50px", 
+                height: "50px", 
+                borderRadius: "50%", 
+                background: "var(--secondary)", 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                color: "white"
+              }}>
+                <Droplet size={24} />
+              </div>
             <div>
               <h3 style={{ fontSize: "0.9rem", color: "var(--secondary)", margin: 0 }}>HIDRATAÇÃO</h3>
               <p style={{ fontWeight: "bold", fontSize: "1rem", margin: 0 }}>Beba 300ml de água agora</p>
