@@ -182,7 +182,8 @@ def log_weight(log: WeightLogCreate, current_user: User = Depends(get_current_us
             water = calculate_water_recommendation(profile.weight)
             
             # Gerar nova projeção
-            new_projection = generate_weight_projection(profile.weight, profile.goal, profile.duration_weeks)
+            duration_weeks = (profile.project_duration_months or 12) * 4
+            new_projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
             
             # Atualizar o plano
             plan.tmb = tmb

@@ -254,4 +254,5 @@ def generate_weight_projection(weight: float, goal: str, duration_weeks: int):
 
 
 def recalculate_projection_with_logs(profile, weight_logs: list):
-    return json.dumps(generate_weight_projection(profile.weight, profile.goal, 12))
+    duration_weeks = (profile.project_duration_months or 12) * 4
+    return json.dumps(generate_weight_projection(profile.weight, profile.goals, duration_weeks))
