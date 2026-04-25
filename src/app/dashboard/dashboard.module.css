@@ -206,4 +206,81 @@
     white-space: nowrap;
     padding: 0.4rem 0.6rem;
   }
+  
+  /* Melhora a responsividade dos cards de refeição no celular */
+  .mealCard {
+    flex-direction: column;
+    align-items: flex-start !important;
+    text-align: left;
+    gap: 0.75rem !important;
+  }
+  
+  .mealCard img {
+    width: 100%;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 8px;
+  }
+  
+  .mealCard > div:first-child {
+    width: 100% !important;
+    height: 120px !important;
+  }
+}
+
+/* Header Buttons container */
+.headerButtons {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 640px) {
+  .headerButtons {
+    flex-direction: column;
+    width: 100%;
+  }
+  .headerButtons button {
+    width: 100%;
+    justify-content: center;
+  }
+  
+  .statRow {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}
+
+.mobileOnlyDetail {
+  display: none;
+}
+
+@media (max-width: 640px) {
+  .mobileOnlyDetail {
+    display: block;
+    width: 100%;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px dashed rgba(16, 185, 129, 0.3);
+    animation: fadeIn 0.3s ease-in-out;
+  }
+}
+
+.notificationClickable {
+  transition: transform 0.2s ease;
+}
+
+@media (max-width: 640px) {
+  .notificationClickable {
+    cursor: pointer;
+  }
+  .notificationClickable:active {
+    transform: scale(0.95);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(-5px); }
+  to { opacity: 1; transform: translateY(0); }
 }

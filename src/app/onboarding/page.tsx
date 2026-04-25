@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
+import { ClipboardList, Ruler, Target, Salad, ArrowLeft, ArrowRight, Rocket, CheckCircle } from "lucide-react";
 import styles from "./onboarding.module.css";
 
 export default function OnboardingPage() {

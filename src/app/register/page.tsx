@@ -35,9 +35,16 @@ export default function RegisterPage() {
       });
       
       // 2. Fazer login automático
+      const loginFormData = new URLSearchParams();
+      loginFormData.append("username", formData.email);
+      loginFormData.append("password", formData.password);
+
       const loginData = await fetchApi("/login", {
         method: "POST",
-        body: JSON.stringify({ email: formData.email, password: formData.password }),
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: loginFormData.toString(),
       });
 
       if (loginData.access_token) {

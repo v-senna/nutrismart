@@ -8,8 +8,8 @@ import json
 import os
 
 from database import engine, get_db, Base
-from models import User, HealthProfile, NutritionalPlan, WeightLog
-from schemas import UserCreate, UserLogin, HealthProfileCreate, WeightLogCreate, WeightLogResponse
+from models import User, HealthProfile, NutritionalPlan, WeightLog, DietaryPreferences
+from schemas import UserCreate, UserLogin, HealthProfileCreate, WeightLogCreate, WeightLogResponse, DietaryPreferencesCreate
 from engine import (
     calculate_tmb,
     calculate_tdee,
@@ -43,7 +43,13 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
     if db_user:
         raise HTTPException(status_code=400, detail="Email já cadastrado")
     
-    new_user = User(email=user.email, password=user.password, name=user.name)
+    new_user = User(
+        email=user.email, 
+        password_hash=user.password, 
+        name=user.name,
+        cpf=user.cpf,
+        phone=user.phone
+    )
     db.add(new_user)
     db.commit()
     db.refresh(new_user)
@@ -52,7 +58,7 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(User).filter(User.email == form_data.username).first()
-    if not user or user.password != form_data.password:
+    if not user or user.password_hash != form_data.password:
         raise HTTPException(status_code=401, detail="Email ou senha incorretos")
     
     # Simplesmente retornando o email como "token" para fins de demonstração
@@ -70,28 +76,56 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 
 # --- Endpoints de Perfil e Plano ---
 
-@app.post("/onboarding")
+@app.post("/profile")
 def create_profile(profile: HealthProfileCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    # Deletar perfil e plano antigos se existirem
     db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).delete()
-    db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).delete()
-    
-    # 1. Criar Perfil de Saúde
     db_profile = HealthProfile(**profile.dict(), user_id=current_user.id)
     db.add(db_profile)
     db.commit()
+    return {"message": "Profile saved"}
+
+@app.get("/profile")
+def get_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    profile = db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).first()
+    return profile or {}
+
+@app.post("/preferences")
+def create_preferences(prefs: DietaryPreferencesCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    db.query(DietaryPreferences).filter(DietaryPreferences.user_id == current_user.id).delete()
+    db_prefs = DietaryPreferences(**prefs.dict(), user_id=current_user.id)
+    db.add(db_prefs)
+    db.commit()
+    return {"message": "Preferences saved"}
+
+@app.get("/preferences")
+def get_preferences(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    prefs = db.query(DietaryPreferences).filter(DietaryPreferences.user_id == current_user.id).first()
+    return prefs or {}
+
+@app.post("/generate-plan")
+def generate_plan(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    profile = db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).first()
+    if not profile:
+        raise HTTPException(status_code=400, detail="Health profile missing")
+        
+    db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).delete()
     
-    # 2. Cálculos da Engine
     tmb = calculate_tmb(profile.gender, profile.weight, profile.height, profile.age)
     tdee = calculate_tdee(tmb, profile.activity_level)
     bmi = round(profile.weight / ((profile.height / 100) ** 2), 1)
     bmi_class = get_bmi_classification(bmi, profile.age)
     water = calculate_water_recommendation(profile.weight)
     
-    plan_data = generate_nutritional_plan(profile.goal, tdee)
-    projection = generate_weight_projection(profile.weight, profile.goal, profile.duration_weeks)
+    plan_data = generate_nutritional_plan(
+        profile.goals,
+        tdee,
+        weight=profile.weight,
+        meals_per_day=profile.meals_per_day or 4,
+        first_meal_time=profile.first_meal_time or "07:00"
+    )
+    duration_weeks = profile.project_duration_months * 4
+    projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
     
-    # 3. Salvar Plano Nutricional
     db_plan = NutritionalPlan(
         user_id=current_user.id,
         tmb=tmb,
@@ -99,18 +133,17 @@ def create_profile(profile: HealthProfileCreate, current_user: User = Depends(ge
         imc=bmi,
         imc_classification=bmi_class,
         water_recommendation=water,
-        calories_target=plan_data["calories_target"],
-        protein_target=plan_data["protein_target"],
-        carbs_target=plan_data["carbs_target"],
-        fats_target=plan_data["fats_target"],
+        target_calories=plan_data["calories_target"],
+        target_protein=plan_data["protein_target"],
+        target_carbs=plan_data["carbs_target"],
+        target_fats=plan_data["fats_target"],
         meals_json=json.dumps(plan_data["meals"]),
         recommendations_text=plan_data["recommendations"],
         projection_data=json.dumps(projection)
     )
     db.add(db_plan)
     db.commit()
-    
-    return {"message": "Plano gerado com sucesso"}
+    return {"message": "Plan generated successfully"}
 
 @app.get("/my-plan")
 def get_plan(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):

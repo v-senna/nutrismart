@@ -79,6 +79,7 @@ export default function DashboardPage() {
   const [projectionData, setProjectionData] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
   const [mealExpanded, setMealExpanded] = useState<Record<number, boolean>>({});
+  const [notificationMealExpanded, setNotificationMealExpanded] = useState(false);
 
   const fetchData = async () => {
     const token = localStorage.getItem("token");
@@ -242,26 +243,18 @@ export default function DashboardPage() {
     }));
   }, [projectionData, viewMode]);
 
-  if (loading)
-    return (
-      <div className={`${styles.container} text-center`}>
-        Carregando seu plano pessoal...
-      </div>
-    );
-  if (error)
-    return (
-      <div className={`${styles.container} text-center`}>Erro: {error}</div>
-    );
-  if (!plan) return null;
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-  let meals: any[] = [];
-  try {
-    if (plan.meals_json) meals = JSON.parse(plan.meals_json);
-  } catch {}
+  const meals = useMemo(() => {
+    if (!plan?.meals_json) return [];
+    try {
+      return JSON.parse(plan.meals_json);
+    } catch {
+      return [];
+    }
+  }, [plan]);
 
   const hasRealData = filteredData.some((d) => d.real !== undefined);
-
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   // Helper to find current/next meal
   const currentMealInfo = useMemo(() => {
@@ -274,7 +267,7 @@ export default function DashboardPage() {
     let closest = meals[0];
     let minDiff = Infinity;
 
-    meals.forEach(m => {
+    meals.forEach((m: any) => {
       const [h, min] = m.time.split(':').map(Number);
       const mealTimeMinutes = h * 60 + min;
       const diff = Math.abs(currentTimeMinutes - mealTimeMinutes);
@@ -285,7 +278,19 @@ export default function DashboardPage() {
     });
 
     return { meal: closest, isTime: minDiff <= 45, diff: minDiff };
-  }, [meals]);
+  }, [meals, notificationsEnabled]);
+
+  if (loading)
+    return (
+      <div className={`${styles.container} text-center`}>
+        Carregando seu plano pessoal...
+      </div>
+    );
+  if (error)
+    return (
+      <div className={`${styles.container} text-center`}>Erro: {error}</div>
+    );
+  if (!plan) return null;
 
   return (
     <div className={styles.container}>
@@ -309,7 +314,7 @@ export default function DashboardPage() {
               Evolução e metas personalizadas
             </p>
           </div>
-          <div style={{ display: "flex", gap: "1rem" }} className="print-hide">
+          <div className={`${styles.headerButtons} print-hide`}>
             <button
               onClick={() => window.print()}
               className="btn flex items-center gap-2"
@@ -361,40 +366,67 @@ export default function DashboardPage() {
         </div>
 
         {/* Smart Notifications */}
-        <div style={{ marginBottom: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "1rem" }}>
+        <div className="print-hide" style={{ marginBottom: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem" }}>
+
           {currentMealInfo && currentMealInfo.isTime && (
             <div className="glass-card" style={{ 
               padding: "1rem", 
               border: "2px solid var(--primary)", 
               background: "rgba(16, 185, 129, 0.05)",
               display: "flex",
-              gap: "1rem",
-              alignItems: "center"
+              flexDirection: "column",
+              gap: "1rem"
             }}>
-              <div style={{ 
-                width: "80px", 
-                height: "80px", 
-                borderRadius: "12px", 
-                overflow: "hidden",
-                flexShrink: 0
-              }}>
-                <img 
-                  src={
-                    currentMealInfo.meal.label.toUpperCase().includes("CAFÉ") ? "/images/cafe.png" :
-                    currentMealInfo.meal.label.toUpperCase().includes("ALMOÇO") ? "/images/almoco.png" :
-                    currentMealInfo.meal.label.toUpperCase().includes("JANTAR") ? "/images/jantar.png" :
-                    "/images/lanche.png"
-                  } 
-                  style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                />
+              <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                <div 
+                  className={styles.notificationClickable}
+                  onClick={() => setNotificationMealExpanded(!notificationMealExpanded)}
+                  style={{ 
+                  width: "80px", 
+                  height: "80px", 
+                  borderRadius: "12px", 
+                  overflow: "hidden",
+                  flexShrink: 0
+                }}>
+                  <img 
+                    src={
+                      currentMealInfo.meal.label.toUpperCase().includes("CAFÉ") ? "/images/cafe.png" :
+                      currentMealInfo.meal.label.toUpperCase().includes("ALMOÇO") ? "/images/almoco.png" :
+                      currentMealInfo.meal.label.toUpperCase().includes("JANTAR") ? "/images/jantar.png" :
+                      "/images/lanche.png"
+                    } 
+                    style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                    alt=""
+                  />
+                </div>
+                <div>
+                  <h3 style={{ fontSize: "0.9rem", color: "var(--primary)", margin: 0, display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                    <Bell size={16} /> HORA DE COMER! ({currentMealInfo.meal.time})
+                  </h3>
+                  <p style={{ fontWeight: "bold", fontSize: "1.1rem", margin: "0.2rem 0" }}>{currentMealInfo.meal.label}</p>
+                  <p style={{ fontSize: "0.85rem", color: "var(--muted)", margin: 0 }}>{currentMealInfo.meal.suggestion}</p>
+                </div>
               </div>
-              <div>
-                <h3 style={{ fontSize: "0.9rem", color: "var(--primary)", margin: 0, display: "flex", alignItems: "center", gap: "0.4rem" }}>
-                  <Bell size={16} /> HORA DE COMER! ({currentMealInfo.meal.time})
-                </h3>
-                <p style={{ fontWeight: "bold", fontSize: "1.1rem", margin: "0.2rem 0" }}>{currentMealInfo.meal.label}</p>
-                <p style={{ fontSize: "0.85rem", color: "var(--muted)", margin: 0 }}>{currentMealInfo.meal.suggestion}</p>
-              </div>
+
+              {notificationMealExpanded && (
+                <div className={styles.mobileOnlyDetail}>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                    <div style={{ fontSize: "0.8rem", color: "var(--muted)" }}>
+                      {currentMealInfo.meal.calories} kcal | P: <strong>{currentMealInfo.meal.protein}g</strong> | C: <strong>{currentMealInfo.meal.carbs}g</strong> | G: <strong>{currentMealInfo.meal.fat}g</strong>
+                    </div>
+                  </div>
+                  <div style={{ background: "rgba(0,255,115,0.05)", padding: "0.75rem", borderRadius: "8px", fontSize: "0.8rem", border: "1px solid rgba(0,255,115,0.2)" }}>
+                    <span style={{ color: "var(--primary)", fontWeight: "600", display: "block", marginBottom: "0.25rem" }}>🔄 Opções de Troca:</span>
+                    <div style={{ color: "var(--foreground)", lineHeight: "1.4" }}>
+                      {currentMealInfo.meal.substitutions ? (
+                        currentMealInfo.meal.substitutions.split('\n').map((line: string, i: number) => (
+                          <div key={i}>{line}</div>
+                        ))
+                      ) : "Mantenha a proporção de macros com alimentos similares."}
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -428,7 +460,7 @@ export default function DashboardPage() {
 
         {/* Evolution Graph */}
         {filteredData.length > 0 && (
-          <div className="glass-card" style={{ marginBottom: "2rem" }}>
+          <div className="glass-card print-hide" style={{ marginBottom: "2rem" }}>
             <div
               style={{
                 display: "flex",
@@ -521,7 +553,7 @@ export default function DashboardPage() {
         )}
 
         {/* --- Weight Log Panel --- */}
-        <div className="glass-card" style={{ marginBottom: "2rem" }}>
+        <div className="glass-card print-hide" style={{ marginBottom: "2rem" }}>
           <h2 style={{ fontSize: "1.25rem", color: "var(--primary)", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <BarChart4 size={20} /> Registrar Peso Atual
           </h2>
@@ -530,7 +562,7 @@ export default function DashboardPage() {
           </p>
 
           <form onSubmit={handleWeightLog} style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "flex-end" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", flex: "1 1 120px" }}>
               <label style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Peso atual (kg) *</label>
               <input
                 type="number"
@@ -548,11 +580,11 @@ export default function DashboardPage() {
                   color: "var(--foreground)",
                   padding: "0.6rem 0.9rem",
                   fontSize: "1rem",
-                  width: "140px",
+                  width: "100%",
                 }}
               />
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", flex: 1, minWidth: "180px" }}>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.35rem", flex: "2 1 150px" }}>
               <label style={{ fontSize: "0.8rem", color: "var(--muted)" }}>Observação (opcional)</label>
               <input
                 type="text"
@@ -654,7 +686,7 @@ export default function DashboardPage() {
         {/* Main Grid */}
         <div className={styles.dashboardGrid}>
           {/* Summary Column */}
-          <div className="glass-card">
+          <div className="glass-card print-hide">
             <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <Dna size={20} /> Resumo Biológico
             </h2>

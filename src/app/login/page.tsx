@@ -19,9 +19,16 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      const formData = new URLSearchParams();
+      formData.append("username", email);
+      formData.append("password", password);
+
       const data = await fetchApi("/login", {
         method: "POST",
-        body: JSON.stringify({ email, password }),
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: formData.toString(),
       });
       
       if (data.access_token) {
