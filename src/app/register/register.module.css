@@ -1,16 +1,110 @@
-.container {
+.vintageContainer {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background-image: radial-gradient(circle at 85% 50%, rgba(16, 185, 129, 0.08), transparent 25%),
-                    radial-gradient(circle at 15% 30%, rgba(59, 130, 246, 0.08), transparent 25%);
+  background-color: #1a1816;
+  background-image: radial-gradient(circle at 85% 50%, rgba(143, 151, 121, 0.08), transparent 25%),
+                    radial-gradient(circle at 15% 30%, rgba(224, 122, 95, 0.05), transparent 25%);
+  color: #e3dcd1;
 }
 
-.registerCard {
+.vintageCard {
   width: 100%;
   max-width: 520px;
+  background: #24221f;
+  border: 1px solid #38342f;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.vintageInputGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.25rem;
+}
+
+.vintageLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #a8a096;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.vintageInput {
+  background-color: #1a1816;
+  border: 1px solid #423d38;
+  color: #e3dcd1;
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.vintageInput::placeholder {
+  color: #6e6761;
+}
+
+.vintageInput:focus {
+  outline: none;
+  border-color: #6a7356;
+  box-shadow: 0 0 0 3px rgba(106, 115, 86, 0.2);
+}
+
+.vintageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  background-color: #4a543b;
+  color: #e3dcd1;
+  width: 100%;
+  margin-top: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  gap: 0.5rem;
+}
+
+.vintageButton:hover:not(:disabled) {
+  background-color: #5a6648;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.vintageButton:disabled {
+  background-color: #3f423a;
+  color: #888;
+  cursor: not-allowed;
+}
+
+.vintageTitle {
+  text-align: center;
+  margin-bottom: 0.5rem;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #e3dcd1;
+  font-family: 'Georgia', serif;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.vintageSubtitle {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #9c9489;
+  font-size: 0.95rem;
 }
 
 .rowGrid {
@@ -20,24 +114,36 @@
 }
 
 .errorMessage {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--error);
-  padding: 0.75rem;
-  border-radius: 8px;
+  background-color: rgba(197, 48, 48, 0.15);
+  color: #ff8c8c;
+  padding: 0.85rem;
+  border-radius: 6px;
   font-size: 0.875rem;
   margin-bottom: 1.5rem;
   text-align: center;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  border: 1px solid rgba(197, 48, 48, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.loginText {
+  text-align: center;
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #9c9489;
 }
 
 .loginLink {
-  color: var(--primary);
-  font-weight: 500;
+  color: #c76d54;
+  font-weight: 600;
   transition: color 0.2s ease;
+  margin-left: 0.25rem;
 }
 
 .loginLink:hover {
-  color: var(--primary-hover);
+  color: #e08369;
   text-decoration: underline;
 }
 
@@ -45,5 +151,11 @@
   .rowGrid {
     grid-template-columns: 1fr;
     gap: 0;
+  }
+  .vintageCard {
+    padding: 1.5rem;
+  }
+  .vintageTitle {
+    font-size: 1.5rem;
   }
 }

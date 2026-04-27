@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 import Link from "next/link";
 import styles from "./register.module.css";
+import { Leaf, Loader2, ArrowRight, AlertCircle } from "lucide-react";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -59,47 +60,67 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className={styles.container}>
-      <div className={`glass-card ${styles.registerCard}`}>
-        <h1 className="text-center mb-2 text-3xl font-bold">✨ Criar Conta</h1>
-        <p className="text-center mb-8 text-gray-400">Junte-se ao NutriSmart para planos personalizados.</p>
+    <div className={styles.vintageContainer}>
+      <div className={styles.vintageCard}>
+        <h1 className={styles.vintageTitle}>
+          <Leaf className="w-8 h-8 text-[#6a7356]" />
+          Criar Conta
+        </h1>
+        <p className={styles.vintageSubtitle}>
+          Junte-se ao NutriSmart para planos personalizados de nutrição.
+        </p>
 
-        {error && <div className={styles.errorMessage}>{error}</div>}
+        {error && (
+          <div className={styles.errorMessage}>
+            <AlertCircle className="w-5 h-5" />
+            {error}
+          </div>
+        )}
 
         <form onSubmit={handleRegister}>
-          <div className="input-group">
-            <label className="input-label" htmlFor="name">Nome Completo</label>
-            <input id="name" type="text" className="input-field" value={formData.name} onChange={handleChange} placeholder="João da Silva" required />
+          <div className={styles.vintageInputGroup}>
+            <label className={styles.vintageLabel} htmlFor="name">Nome Completo</label>
+            <input id="name" type="text" className={styles.vintageInput} value={formData.name} onChange={handleChange} placeholder="João da Silva" required />
           </div>
 
           <div className={styles.rowGrid}>
-            <div className="input-group">
-              <label className="input-label" htmlFor="cpf">CPF</label>
-              <input id="cpf" type="text" className="input-field" value={formData.cpf} onChange={handleChange} placeholder="000.000.000-00" required />
+            <div className={styles.vintageInputGroup}>
+              <label className={styles.vintageLabel} htmlFor="cpf">CPF</label>
+              <input id="cpf" type="text" className={styles.vintageInput} value={formData.cpf} onChange={handleChange} placeholder="000.000.000-00" required />
             </div>
 
-            <div className="input-group">
-              <label className="input-label" htmlFor="phone">Telefone</label>
-              <input id="phone" type="text" className="input-field" value={formData.phone} onChange={handleChange} placeholder="(11) 90000-0000" required />
+            <div className={styles.vintageInputGroup}>
+              <label className={styles.vintageLabel} htmlFor="phone">Telefone</label>
+              <input id="phone" type="text" className={styles.vintageInput} value={formData.phone} onChange={handleChange} placeholder="(11) 90000-0000" required />
             </div>
           </div>
 
-          <div className="input-group">
-            <label className="input-label" htmlFor="email">E-mail</label>
-            <input id="email" type="email" className="input-field" value={formData.email} onChange={handleChange} placeholder="seu@email.com" required />
+          <div className={styles.vintageInputGroup}>
+            <label className={styles.vintageLabel} htmlFor="email">E-mail</label>
+            <input id="email" type="email" className={styles.vintageInput} value={formData.email} onChange={handleChange} placeholder="seu@email.com" required />
           </div>
 
-          <div className="input-group">
-            <label className="input-label" htmlFor="password">Senha</label>
-            <input id="password" type="password" className="input-field" value={formData.password} onChange={handleChange} placeholder="••••••••" required />
+          <div className={styles.vintageInputGroup}>
+            <label className={styles.vintageLabel} htmlFor="password">Senha</label>
+            <input id="password" type="password" className={styles.vintageInput} value={formData.password} onChange={handleChange} placeholder="••••••••" required />
           </div>
 
-          <button type="submit" className={`btn btn-primary w-full mt-4`} disabled={loading} style={{ width: '100%' }}>
-            {loading ? "⌛ Criando Conta..." : "🚀 Começar Minha Jornada"}
+          <button type="submit" className={styles.vintageButton} disabled={loading}>
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin" />
+                Criando Conta...
+              </>
+            ) : (
+              <>
+                Começar Minha Jornada
+                <ArrowRight className="w-5 h-5" />
+              </>
+            )}
           </button>
         </form>
 
-        <p className="text-center mt-6 text-sm">
+        <p className={styles.loginText}>
           Já tem uma conta? <Link href="/login" className={styles.loginLink}>Entrar</Link>
         </p>
       </div>
