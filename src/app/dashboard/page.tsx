@@ -327,7 +327,7 @@ export default function DashboardPage() {
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            marginBottom: "2rem",
+            marginBottom: "1.25rem",
             flexWrap: "wrap",
             gap: "1rem",
           }}
@@ -391,8 +391,11 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Smart Notifications */}
-        <div className={`print-hide ${styles.orderMobileFirst}`} style={{ marginBottom: "1.5rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem" }}>
+        {/* ── MOBILE WRAP: all sections ordered ── */}
+        <div className={styles.dashboardMobileWrap}>
+
+        {/* 1️⃣ Notifications + Hydration */}
+        <div className={`print-hide ${styles.orderMobileFirst}`} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem" }}>
 
           {currentMealInfo && currentMealInfo.isTime && (
             <div className="glass-card" style={{ 
@@ -482,11 +485,11 @@ export default function DashboardPage() {
               <p style={{ fontSize: "0.75rem", color: "var(--muted)", margin: 0 }}>Meta diária: {((plan.water_recommendation || 0)/1000).toFixed(1)}L</p>
             </div>
           </div>
-        </div>
+        </div>{/* end notifications */}
 
-        {/* Evolution Graph */}
+        {/* 2️⃣ Evolution Graph */}
         {filteredData.length > 0 && (
-          <div className={`glass-card print-hide ${styles.orderMobileSecond}`} style={{ marginBottom: "1.5rem" }}>
+          <div className={`glass-card print-hide ${styles.orderMobileSecond}`}>
             <div
               style={{
                 display: "flex",
@@ -576,10 +579,10 @@ export default function DashboardPage() {
               </ResponsiveContainer>
             </div>
           </div>
-        )}
+        )}{/* end graph */}
 
-        {/* --- Weight Log Panel --- */}
-        <div className={`glass-card print-hide ${styles.orderMobileThird}`} style={{ marginBottom: "1.5rem" }}>
+        {/* 3️⃣ Weight Log */}
+        <div className={`glass-card print-hide ${styles.orderMobileThird}`}>
           <h2 style={{ fontSize: "1.25rem", color: "var(--primary)", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <BarChart4 size={20} /> Registrar Peso Atual
           </h2>
@@ -696,11 +699,11 @@ export default function DashboardPage() {
               </div>
             </div>
           )}
-        </div>
+        </div>{/* end weight log */}
 
-        {/* Main Grid */}
+        {/* 4️⃣+5️⃣ Main Grid (bio+tips LEFT | meals RIGHT) */}
         <div className={styles.dashboardGrid}>
-          {/* Summary Column = tips + bio (mobile: order 4) */}
+          {/* Summary + Tips (mobile: order 4) */}
           <div className={`glass-card print-hide ${styles.orderMobileFourth}`}>
             <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <Dna size={20} /> Resumo Biológico
@@ -989,7 +992,9 @@ export default function DashboardPage() {
             </div>
           </div>
 
-        </div>
+        </div>{/* end dashboardGrid */}
+
+        </div>{/* end dashboardMobileWrap */}
       </div>
     </div>
   );
