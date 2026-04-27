@@ -26,12 +26,33 @@ import {
   ArrowLeft,
   ArrowRight,
   Hand,
-  ChevronDown,
   ChevronUp,
   Bell,
   BellOff,
-  Droplet
+  Droplet,
+  CheckCircle2,
+  XCircle
 } from "lucide-react";
+
+// ── Toast ──────────────────────────────────────────────────
+type ToastType = "success" | "error" | "info";
+interface ToastItem { id: number; message: string; type: ToastType; }
+let _toastId = 0;
+function ToastContainer({ toasts, remove }: { toasts: ToastItem[]; remove: (id: number) => void }) {
+  return (
+    <div className={styles.toastContainer}>
+      {toasts.map((t) => (
+        <div key={t.id} className={`${styles.toast} ${styles[`toast_${t.type}`]}`}>
+          {t.type === "success" && <CheckCircle2 className="w-5 h-5 flex-shrink-0" />}
+          {t.type === "error" && <XCircle className="w-5 h-5 flex-shrink-0" />}
+          {t.type === "info" && <Bell className="w-5 h-5 flex-shrink-0" />}
+          <span>{t.message}</span>
+          <button className={styles.toastClose} onClick={() => remove(t.id)}>✕</button>
+        </div>
+      ))}
+    </div>
+  );
+}
 import styles from "./dashboard.module.css";
 
 // ---------------------
@@ -75,11 +96,18 @@ export default function DashboardPage() {
   const [newWeight, setNewWeight] = useState("");
   const [newNote, setNewNote] = useState("");
   const [logSubmitting, setLogSubmitting] = useState(false);
-  const [logMessage, setLogMessage] = useState("");
   const [projectionData, setProjectionData] = useState<any[]>([]);
   const [userName, setUserName] = useState("");
   const [mealExpanded, setMealExpanded] = useState<Record<number, boolean>>({});
   const [notificationMealExpanded, setNotificationMealExpanded] = useState(false);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
+
+  const addToast = (message: string, type: ToastType = "info") => {
+    const id = ++_toastId;
+    setToasts((prev) => [...prev, { id, message, type }]);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 5000);
+  };
+  const removeToast = (id: number) => setToasts((prev) => prev.filter((t) => t.id !== id));
 
   const fetchData = async () => {
     const token = localStorage.getItem("token");
@@ -192,11 +220,10 @@ export default function DashboardPage() {
     e.preventDefault();
     const val = parseFloat(newWeight);
     if (!val || val < 20 || val > 300) {
-      setLogMessage("Informe um peso válido (20–300 kg).");
+      addToast("Informe um peso válido entre 20 e 300 kg.", "error");
       return;
     }
     setLogSubmitting(true);
-    setLogMessage("");
     try {
       const token = localStorage.getItem("token");
       const res = await fetchApi("/weight-log", {
@@ -207,18 +234,16 @@ export default function DashboardPage() {
         },
         body: JSON.stringify({ weight: val, note: newNote || null }),
       });
-      setLogMessage(res.message || "Registrado!");
+      addToast(res.message || "Peso registrado com sucesso!", "success");
       setNewWeight("");
       setNewNote("");
-      if (res.logs) setWeightLogs(res.logs.reverse());
+      if (res.logs) setWeightLogs(res.logs);
       if (res.new_projection) {
-        try {
-          setProjectionData(JSON.parse(res.new_projection));
-        } catch {}
+        try { setProjectionData(JSON.parse(res.new_projection)); } catch {}
       }
-      fetchData(); // Atualiza métricas e plano com o novo peso
+      fetchData();
     } catch (err: any) {
-      setLogMessage("Erro: " + err.message);
+      addToast("Erro ao registrar peso: " + err.message, "error");
     } finally {
       setLogSubmitting(false);
     }
@@ -294,6 +319,7 @@ export default function DashboardPage() {
 
   return (
     <div className={styles.container}>
+      <ToastContainer toasts={toasts} remove={removeToast} />
       <div className="container">
         {/* Header */}
         <div
@@ -366,7 +392,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Smart Notifications */}
-        <div className="print-hide" style={{ marginBottom: "2rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem" }}>
+        <div className={`print-hide ${styles.orderMobileFirst}`} style={{ marginBottom: "1.5rem", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: "1rem" }}>
 
           {currentMealInfo && currentMealInfo.isTime && (
             <div className="glass-card" style={{ 
@@ -460,7 +486,7 @@ export default function DashboardPage() {
 
         {/* Evolution Graph */}
         {filteredData.length > 0 && (
-          <div className="glass-card print-hide" style={{ marginBottom: "2rem" }}>
+          <div className={`glass-card print-hide ${styles.orderMobileSecond}`} style={{ marginBottom: "1.5rem" }}>
             <div
               style={{
                 display: "flex",
@@ -553,7 +579,7 @@ export default function DashboardPage() {
         )}
 
         {/* --- Weight Log Panel --- */}
-        <div className="glass-card print-hide" style={{ marginBottom: "2rem" }}>
+        <div className={`glass-card print-hide ${styles.orderMobileThird}`} style={{ marginBottom: "1.5rem" }}>
           <h2 style={{ fontSize: "1.25rem", color: "var(--primary)", marginBottom: "1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
             <BarChart4 size={20} /> Registrar Peso Atual
           </h2>
@@ -621,18 +647,7 @@ export default function DashboardPage() {
             </button>
           </form>
 
-          {logMessage && (
-            <p
-              style={{
-                marginTop: "0.75rem",
-                fontSize: "0.875rem",
-                color: logMessage.startsWith("Erro") ? "#f87171" : "var(--primary)",
-                fontWeight: "500",
-              }}
-            >
-              {logMessage}
-            </p>
-          )}
+
 
           {/* History */}
           {weightLogs.length > 0 && (
@@ -685,8 +700,8 @@ export default function DashboardPage() {
 
         {/* Main Grid */}
         <div className={styles.dashboardGrid}>
-          {/* Summary Column */}
-          <div className="glass-card print-hide">
+          {/* Summary Column = tips + bio (mobile: order 4) */}
+          <div className={`glass-card print-hide ${styles.orderMobileFourth}`}>
             <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <Dna size={20} /> Resumo Biológico
             </h2>
@@ -815,8 +830,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Meals Column */}
-          <div className="glass-card">
+          {/* Meals Column (mobile: order 5) */}
+          <div className={`glass-card ${styles.orderMobileFifth}`}>
             <h2 style={{ fontSize: "1.25rem", marginBottom: "1.5rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <Utensils size={20} /> Planejamento de Refeições
             </h2>

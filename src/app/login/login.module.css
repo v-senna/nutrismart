@@ -1,36 +1,164 @@
-.container {
+.vintageContainer {
   min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
-  background-image: radial-gradient(circle at 15% 50%, rgba(16, 185, 129, 0.08), transparent 25%),
-                    radial-gradient(circle at 85% 30%, rgba(59, 130, 246, 0.08), transparent 25%);
+  padding: 2rem 1rem;
+  background-color: #1a1816;
+  background-image: radial-gradient(circle at 15% 50%, rgba(106, 115, 86, 0.1), transparent 30%),
+                    radial-gradient(circle at 85% 30%, rgba(199, 109, 84, 0.05), transparent 30%);
+  color: #e3dcd1;
 }
 
-.loginCard {
+.vintageCard {
   width: 100%;
   max-width: 420px;
+  background: #24221f;
+  border: 1px solid #38342f;
+  border-radius: 12px;
+  padding: 2.5rem;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.logoArea {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  margin-bottom: 0.4rem;
+}
+
+.logoIcon {
+  width: 32px;
+  height: 32px;
+  color: #6a7356;
+}
+
+.vintageTitle {
+  text-align: center;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #e3dcd1;
+  font-family: 'Georgia', serif;
+  margin: 0;
+}
+
+.vintageSubtitle {
+  text-align: center;
+  margin-bottom: 2rem;
+  color: #9c9489;
+  font-size: 0.9rem;
+}
+
+.vintageInputGroup {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 1.25rem;
+}
+
+.vintageLabel {
+  font-size: 0.8rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: #a8a096;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.vintageInput {
+  background-color: #1a1816;
+  border: 1px solid #423d38;
+  color: #e3dcd1;
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  width: 100%;
+}
+
+.vintageInput::placeholder {
+  color: #6e6761;
+}
+
+.vintageInput:focus {
+  outline: none;
+  border-color: #6a7356;
+  box-shadow: 0 0 0 3px rgba(106, 115, 86, 0.2);
+}
+
+.vintageButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.85rem 1.5rem;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: none;
+  background-color: #4a543b;
+  color: #e3dcd1;
+  width: 100%;
+  margin-top: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  gap: 0.5rem;
+}
+
+.vintageButton:hover:not(:disabled) {
+  background-color: #5a6648;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+}
+
+.vintageButton:disabled {
+  background-color: #3f423a;
+  color: #888;
+  cursor: not-allowed;
 }
 
 .errorMessage {
-  background-color: rgba(239, 68, 68, 0.1);
-  color: var(--error);
-  padding: 0.75rem;
-  border-radius: 8px;
+  background-color: rgba(197, 48, 48, 0.15);
+  color: #ff8c8c;
+  padding: 0.85rem;
+  border-radius: 6px;
   font-size: 0.875rem;
   margin-bottom: 1.5rem;
+  border: 1px solid rgba(197, 48, 48, 0.3);
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+}
+
+.loginText {
   text-align: center;
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+  color: #9c9489;
 }
 
-.registerLink {
-  color: var(--primary);
-  font-weight: 500;
+.loginLink {
+  color: #c76d54;
+  font-weight: 600;
   transition: color 0.2s ease;
+  margin-left: 0.25rem;
 }
 
-.registerLink:hover {
-  color: var(--primary-hover);
+.loginLink:hover {
+  color: #e08369;
   text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .vintageCard {
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+  .vintageTitle {
+    font-size: 1.6rem;
+  }
 }

@@ -27,7 +27,7 @@
 }
 
 .vintageLabel {
-  font-size: 0.875rem;
+  font-size: 0.8rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
   color: #a8a096;
@@ -44,6 +44,7 @@
   font-size: 1rem;
   transition: all 0.2s ease;
   font-family: inherit;
+  width: 100%;
 }
 
 .vintageInput::placeholder {
@@ -54,6 +55,17 @@
   outline: none;
   border-color: #6a7356;
   box-shadow: 0 0 0 3px rgba(106, 115, 86, 0.2);
+}
+
+.inputError {
+  border-color: #c53030 !important;
+  box-shadow: 0 0 0 2px rgba(197, 48, 48, 0.2) !important;
+}
+
+.fieldError {
+  font-size: 0.78rem;
+  color: #ff8c8c;
+  margin-top: 0.3rem;
 }
 
 .vintageButton {
@@ -113,21 +125,6 @@
   gap: 1rem;
 }
 
-.errorMessage {
-  background-color: rgba(197, 48, 48, 0.15);
-  color: #ff8c8c;
-  padding: 0.85rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  border: 1px solid rgba(197, 48, 48, 0.3);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-}
-
 .loginText {
   text-align: center;
   margin-top: 1.5rem;
@@ -145,6 +142,73 @@
 .loginLink:hover {
   color: #e08369;
   text-decoration: underline;
+}
+
+/* ── Toast Notifications ── */
+.toastContainer {
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  left: 1rem;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  pointer-events: none;
+  max-width: 420px;
+  margin-left: auto;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  pointer-events: all;
+  animation: slideIn 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  border: 1px solid transparent;
+}
+
+.toast_success {
+  background: rgba(74, 84, 59, 0.95);
+  border-color: #5a6648;
+  color: #c8d4b0;
+}
+
+.toast_error {
+  background: rgba(100, 30, 30, 0.95);
+  border-color: #7a2929;
+  color: #fca5a5;
+}
+
+.toast_info {
+  background: rgba(40, 70, 90, 0.95);
+  border-color: #2d5a7a;
+  color: #93c5fd;
+}
+
+.toastClose {
+  background: transparent;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-left: auto;
+  opacity: 0.7;
+  padding: 0 0.2rem;
+  flex-shrink: 0;
+}
+
+.toastClose:hover {
+  opacity: 1;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(30px); }
+  to { opacity: 1; transform: translateX(0); }
 }
 
 @media (max-width: 600px) {

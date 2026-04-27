@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 from typing import List
 import json
 import os
+import re
 
 from database import engine, get_db, Base
 from models import User, HealthProfile, NutritionalPlan, WeightLog, DietaryPreferences
@@ -27,7 +28,7 @@ app = FastAPI(title="NutriSmart API")
 # Configurar CORS para o frontend (Next.js)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"], # Na Vercel/Produção, substitua por domínios específicos
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -35,19 +36,31 @@ app.add_middleware(
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
+def clean_cpf(cpf: str) -> str:
+    """Remove formatação do CPF, retorna apenas dígitos."""
+    return re.sub(r'\D', '', cpf)
+
 # --- Endpoints de Autenticação ---
 
 @app.post("/register")
 def register(user: UserCreate, db: Session = Depends(get_db)):
-    db_user = db.query(User).filter(User.email == user.email).first()
-    if db_user:
-        raise HTTPException(status_code=400, detail="Email já cadastrado")
-    
+    # Verificar e-mail duplicado
+    db_user_email = db.query(User).filter(User.email == user.email).first()
+    if db_user_email:
+        raise HTTPException(status_code=400, detail="E-mail já cadastrado")
+
+    # Verificar CPF duplicado (comparando apenas dígitos)
+    cpf_clean = clean_cpf(user.cpf)
+    all_users = db.query(User).all()
+    for u in all_users:
+        if clean_cpf(u.cpf) == cpf_clean:
+            raise HTTPException(status_code=400, detail="CPF já cadastrado")
+
     new_user = User(
-        email=user.email, 
-        password_hash=user.password, 
+        email=user.email,
+        password_hash=user.password,
         name=user.name,
-        cpf=user.cpf,
+        cpf=cpf_clean,  # Salvar sempre sem formatação
         phone=user.phone
     )
     db.add(new_user)
@@ -57,15 +70,45 @@ def register(user: UserCreate, db: Session = Depends(get_db)):
 
 @app.post("/login")
 def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == form_data.username).first()
+    # Suporte a login por CPF (apenas dígitos) ou e-mail
+    username = form_data.username.strip()
+    cpf_clean = re.sub(r'\D', '', username)
+
+    user = None
+    # Tentar CPF primeiro se o campo parece ser CPF (só dígitos após limpeza)
+    if cpf_clean and len(cpf_clean) == 11:
+        all_users = db.query(User).all()
+        for u in all_users:
+            if clean_cpf(u.cpf) == cpf_clean:
+                user = u
+                break
+
+    # Fallback para e-mail
+    if not user:
+        user = db.query(User).filter(User.email == username).first()
+
     if not user or user.password_hash != form_data.password:
-        raise HTTPException(status_code=401, detail="Email ou senha incorretos")
-    
-    # Simplesmente retornando o email como "token" para fins de demonstração
-    return {"access_token": user.email, "token_type": "bearer"}
+        raise HTTPException(status_code=401, detail="CPF/E-mail ou senha incorretos")
+
+    # Token = CPF limpo do usuário para identificação
+    return {"access_token": user.cpf, "token_type": "bearer"}
 
 async def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
-    user = db.query(User).filter(User.email == token).first()
+    # Token pode ser CPF ou e-mail (compatibilidade)
+    cpf_clean = re.sub(r'\D', '', token)
+
+    user = None
+    if len(cpf_clean) == 11:
+        all_users = db.query(User).all()
+        for u in all_users:
+            if clean_cpf(u.cpf) == cpf_clean:
+                user = u
+                break
+
+    # Fallback e-mail para sessões antigas
+    if not user:
+        user = db.query(User).filter(User.email == token).first()
+
     if not user:
         raise HTTPException(status_code=401, detail="Token inválido")
     return user
@@ -107,15 +150,15 @@ def generate_plan(current_user: User = Depends(get_current_user), db: Session = 
     profile = db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).first()
     if not profile:
         raise HTTPException(status_code=400, detail="Health profile missing")
-        
+
     db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).delete()
-    
+
     tmb = calculate_tmb(profile.gender, profile.weight, profile.height, profile.age)
     tdee = calculate_tdee(tmb, profile.activity_level)
     bmi = round(profile.weight / ((profile.height / 100) ** 2), 1)
     bmi_class = get_bmi_classification(bmi, profile.age)
     water = calculate_water_recommendation(profile.weight)
-    
+
     plan_data = generate_nutritional_plan(
         profile.goals,
         tdee,
@@ -125,7 +168,7 @@ def generate_plan(current_user: User = Depends(get_current_user), db: Session = 
     )
     duration_weeks = profile.project_duration_months * 4
     projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
-    
+
     db_plan = NutritionalPlan(
         user_id=current_user.id,
         tmb=tmb,
@@ -164,50 +207,68 @@ def log_weight(log: WeightLogCreate, current_user: User = Depends(get_current_us
         logged_at=datetime.utcnow()
     )
     db.add(new_log)
-    
+    db.flush()  # Garante que o novo log tem ID antes do commit
+
     # 2. Atualizar o peso no perfil de saúde para manter sincronizado
     profile = db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).first()
     if profile:
         profile.weight = log.weight
-        
+
         # 3. Recalcular a projeção com base no novo peso real
-        # Mantemos a meta e a duração originais, mas partimos do novo peso
         plan = db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).first()
         if plan:
-            # Recalcular TMB/TDEE/IMC com o novo peso
             tmb = calculate_tmb(profile.gender, profile.weight, profile.height, profile.age)
             tdee = calculate_tdee(tmb, profile.activity_level)
             bmi = round(profile.weight / ((profile.height / 100) ** 2), 1)
             bmi_class = get_bmi_classification(bmi, profile.age)
             water = calculate_water_recommendation(profile.weight)
-            
-            # Gerar nova projeção
+
             duration_weeks = (profile.project_duration_months or 12) * 4
             new_projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
-            
-            # Atualizar o plano
+
             plan.tmb = tmb
             plan.tdee = tdee
             plan.imc = bmi
             plan.imc_classification = bmi_class
             plan.water_recommendation = water
             plan.projection_data = json.dumps(new_projection)
-            
-            db.commit()
-            
-            # Retornar os logs atualizados e a nova projeção
-            all_logs = db.query(WeightLog).filter(WeightLog.user_id == current_user.id).order_by(WeightLog.logged_at.desc()).all()
-            return {
-                "message": "Peso registrado e projeção atualizada!",
-                "logs": all_logs,
-                "new_projection": plan.projection_data
-            }
-            
+
     db.commit()
-    all_logs = db.query(WeightLog).filter(WeightLog.user_id == current_user.id).order_by(WeightLog.logged_at.desc()).all()
-    return {"message": "Peso registrado!", "logs": all_logs}
+
+    # Buscar logs atualizados após o commit
+    all_logs = db.query(WeightLog).filter(
+        WeightLog.user_id == current_user.id
+    ).order_by(WeightLog.logged_at.desc()).all()
+
+    # Serializar logs manualmente para evitar erros de serialização
+    logs_serialized = [
+        {
+            "id": l.id,
+            "weight": l.weight,
+            "note": l.note,
+            "logged_at": l.logged_at.isoformat() if l.logged_at else None
+        }
+        for l in all_logs
+    ]
+
+    plan_after = db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).first()
+    new_proj = plan_after.projection_data if plan_after else None
+
+    return {
+        "message": "Peso registrado e projeção atualizada!",
+        "logs": logs_serialized,
+        "new_projection": new_proj
+    }
 
 @app.get("/weight-logs")
 def get_weight_logs(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     logs = db.query(WeightLog).filter(WeightLog.user_id == current_user.id).order_by(WeightLog.logged_at.desc()).all()
-    return logs
+    return [
+        {
+            "id": l.id,
+            "weight": l.weight,
+            "note": l.note,
+            "logged_at": l.logged_at.isoformat() if l.logged_at else None
+        }
+        for l in logs
+    ]
