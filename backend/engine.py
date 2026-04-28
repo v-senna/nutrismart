@@ -155,33 +155,57 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
     except Exception:
         base_h, base_m = 7, 0
 
-    def get_dynamic_suggestion(label, p, c, f):
+    def get_dynamic_suggestion(label, p, c, f, goal):
+        is_gain = goal in ("Hipertrofia", "Ganho de Massa Muscular")
+        is_loss = goal == "Emagrecimento"
+        
         if "Café da Manhã" in label:
             ovos = max(1, round(p / 6))
-            pao = max(1, round((c * 0.6) / 12))
-            fruta = max(1, round((c * 0.4) / 15))
-            return f"Ovos mexidos ({ovos} und) + pão integral ({pao} fatias) + {fruta} porção(ões) de fruta"
+            if is_loss:
+                # Menos pão, mais fruta/fibras
+                pao = max(1, round((c * 0.4) / 12))
+                return f"Ovos mexidos ({ovos} und) + pão integral ({pao} fatia) + Mamão com aveia (150g)"
+            else:
+                # Mais pão ou tapioca
+                pao = max(2, round((c * 0.7) / 12))
+                return f"Ovos mexidos ({ovos} und) + pão integral ({pao} fatias) + Suco de laranja natural (200ml)"
+                
         elif "Lanche da Manhã" in label:
-            fruta = max(1, round(c / 15))
-            castanhas = max(10, round(f / 0.5))
-            return f"{fruta} porção(ões) de fruta + castanhas ({castanhas}g)"
+            if is_loss:
+                return f"1 Maçã ou Pera + Castanhas do Pará (2 und)"
+            else:
+                return f"Iogurte Natural + Granola (40g) + 1 Banana"
+                
         elif "Almoço" in label:
-            frango = max(50, round(p / 0.3))
-            arroz = max(30, round((c * 0.7) / 0.28))
-            feijao = max(20, round((c * 0.3) / 0.14))
-            return f"Frango grelhado ({frango}g) + arroz integral ({arroz}g) + feijão ({feijao}g) + salada à vontade"
+            frango = max(80, round(p / 0.3))
+            if is_loss:
+                arroz = max(50, round((c * 0.5) / 0.28))
+                vegetais = "Brócolis e Cenoura (à vontade)"
+                return f"Frango/Peixe grelhado ({frango}g) + arroz integral ({arroz}g) + {vegetais} + Azeite (1 col. chá)"
+            else:
+                arroz = max(120, round((c * 0.7) / 0.28))
+                feijao = max(80, round((c * 0.3) / 0.14))
+                return f"Carne bovina magra/Frango ({frango}g) + arroz ({arroz}g) + feijão ({feijao}g) + Salada mista"
+                
         elif "Lanche da Tarde" in label:
-            iogurte = max(100, round(p / 0.1))
-            aveia = max(10, round(c / 0.6))
-            return f"Iogurte grego ({iogurte}g) + aveia ({aveia}g) ou fruta"
+            if is_loss:
+                return f"Whey Protein (1 scoop) diluído em água + 10 morangos"
+            else:
+                pao = max(2, round(c / 12))
+                return f"Sanduíche de frango desfiado (pão integral {pao} fatias) + Suco de uva integral"
+                
         elif "Jantar" in label:
-            carne = max(50, round(p / 0.3))
-            batata = max(50, round(c / 0.2))
-            return f"Peixe/Frango grelhado ({carne}g) + legumes refogados + batata doce ({batata}g)"
+            proteina = max(80, round(p / 0.3))
+            if is_loss:
+                return f"Omelete (3 ovos) com espinafre e tomate + Mix de folhas verdes"
+            else:
+                massa = max(100, round(c / 0.3))
+                return f"Macarrão integral ({massa}g) com patinho moído ({proteina}g) + Molho de tomate caseiro"
         else:
-            iogurte = max(100, round(p / 0.1))
-            fruta = max(1, round(c / 15))
-            return f"Caseína ou iogurte grego ({iogurte}g) + {fruta} porção(ões) de fruta"
+            if is_loss:
+                return f"Iogurte desnatado (200g) ou Caseína"
+            else:
+                return f"Abacate (100g) com Whey Protein ou Leite integral"
 
     meals = []
     for tmpl in selected:
@@ -197,7 +221,7 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
         meals.append({
             "time":          time_str,
             "label":         tmpl["label"],
-            "suggestion":    get_dynamic_suggestion(tmpl["label"], prot, carbs, fat),
+            "suggestion":    get_dynamic_suggestion(tmpl["label"], prot, carbs, fat, goal),
             "substitutions": tmpl["substitutions"],
             "calories":      cal,
             "protein":       prot,
