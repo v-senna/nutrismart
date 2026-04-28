@@ -2,7 +2,11 @@
 import { useEffect, useState } from "react";
 import { Sun, Moon } from "lucide-react";
 
-export default function ThemeToggle() {
+interface ThemeToggleProps {
+  inline?: boolean;
+}
+
+export default function ThemeToggle({ inline }: ThemeToggleProps) {
   const [dark, setDark] = useState<boolean>(() => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("theme");
@@ -19,6 +23,33 @@ export default function ThemeToggle() {
     document.documentElement.setAttribute("data-theme", next ? "dark" : "light");
     localStorage.setItem("theme", next ? "dark" : "light");
   };
+
+  if (inline) {
+    return (
+      <button
+        onClick={toggle}
+        title={dark ? "Ativar Modo Claro" : "Ativar Modo Escuro"}
+        style={{
+          background: "var(--card-bg)",
+          border: "1px solid var(--card-border)",
+          color: "var(--primary)",
+          borderRadius: "10px",
+          padding: "0.4rem",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          cursor: "pointer",
+          transition: "all 0.2s",
+          boxShadow: "0 2px 10px rgba(0, 0, 0, 0.1)",
+          flexShrink: 0,
+        }}
+        onMouseEnter={e => (e.currentTarget.style.transform = "scale(1.05)")}
+        onMouseLeave={e => (e.currentTarget.style.transform = "scale(1)")}
+      >
+        {dark ? <Sun size={20} /> : <Moon size={20} />}
+      </button>
+    );
+  }
 
   return (
     <button

@@ -1,13 +1,20 @@
 .container {
   min-height: 100vh;
   padding: 1.5rem 1rem;
-  background-image: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.05), transparent 40%);
+  background-image: radial-gradient(circle at 50% 0%, rgba(90, 102, 72, 0.05), transparent 40%);
 }
 
 /* ── Desktop: two-column grid ── */
 .dashboardGrid {
   display: grid;
   grid-template-columns: 1fr 2fr;
+  gap: 2rem;
+  margin-top: 1.5rem;
+}
+
+.dashboardGridStack {
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
   margin-top: 1.5rem;
 }
@@ -49,24 +56,28 @@
 }
 
 .macroCard {
-  background: rgba(30, 41, 59, 0.4);
+  background: color-mix(in srgb, var(--card-bg), var(--background) 30%);
   border: 1px solid var(--card-border);
-  border-radius: 10px;
-  padding: 0.75rem 0.5rem;
+  border-radius: 14px;
+  padding: 1.25rem 0.5rem;
   text-align: center;
-  transition: all 0.3s ease;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .macroCard:hover {
   border-color: var(--primary);
-  transform: translateY(-2px);
+  transform: translateY(-4px);
+  background: var(--card-bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
 }
 
 .macroValue {
-  font-size: 1.3rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin: 0.3rem 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--foreground); /* Use foreground for maximum visibility */
+  margin: 0.4rem 0;
+  text-shadow: 0 0 20px color-mix(in srgb, var(--primary), transparent 80%);
 }
 
 @media (max-width: 480px) {
@@ -112,8 +123,8 @@
 .mealCard { transition: all 0.2s ease; }
 .mealCard:hover {
   transform: translateX(4px);
-  background: rgba(0, 255, 115, 0.08) !important;
-  border-color: rgba(0, 255, 115, 0.3) !important;
+  background: color-mix(in srgb, var(--primary), transparent 92%) !important;
+  border-color: color-mix(in srgb, var(--primary), transparent 70%) !important;
 }
 @media (max-width: 640px) {
   .mealCard:hover { transform: none; }
@@ -124,7 +135,8 @@
 .tabs {
   display: flex;
   gap: 0.25rem;
-  background: rgba(30, 41, 59, 0.4);
+  background: var(--input-bg);
+  border: 1px solid var(--card-border);
   padding: 0.2rem;
   border-radius: 8px;
   overflow-x: auto;
@@ -232,13 +244,6 @@
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Glass card compact on mobile ── */
-@media (max-width: 640px) {
-  :global(.glass-card) {
-    padding: 1rem !important;
-    border-radius: 10px !important;
-  }
-}
 
 /* ══════════════════════════════════════
    TOAST NOTIFICATIONS

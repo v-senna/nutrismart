@@ -6,6 +6,7 @@ import { fetchApi } from "@/lib/api";
 import Link from "next/link";
 import styles from "./register.module.css";
 import { Leaf, Loader2, ArrowRight, AlertCircle, CheckCircle2, XCircle } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 // ─── Máscaras ───────────────────────────────────────────────
 function formatCPF(v: string) {
@@ -273,6 +274,7 @@ export default function RegisterPage() {
           Já tem uma conta? <Link href="/login" className={styles.loginLink}>Entrar com CPF</Link>
         </p>
       </div>
+      <ThemeToggle />
     </div>
   );
 }

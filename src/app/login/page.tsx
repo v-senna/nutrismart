@@ -6,14 +6,7 @@ import { fetchApi } from "@/lib/api";
 import Link from "next/link";
 import styles from "./login.module.css";
 import { Leaf, Loader2, LogIn, AlertCircle, IdCard } from "lucide-react";
-
-function formatCPF(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 11);
-  return digits
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d)/, "$1.$2")
-    .replace(/(\d{3})(\d{1,2})$/, "$1-$2");
-}
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const [cpf, setCpf] = useState("");
@@ -22,23 +15,25 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleCpfChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setCpf(formatCPF(e.target.value));
-  };
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    const cpfDigits = cpf.replace(/\D/g, "");
-    if (cpfDigits.length !== 11) {
-      setError("Digite um CPF válido com 11 dígitos.");
+    
+    // Identificar se é CPF (apenas dígitos) ou E-mail
+    const identifier = cpf.trim();
+    const isEmail = identifier.includes("@");
+    const cleanIdentifier = isEmail ? identifier : identifier.replace(/\D/g, "");
+
+    if (!isEmail && cleanIdentifier.length !== 11) {
+      setError("Digite um CPF válido (11 dígitos) ou um e-mail.");
       return;
     }
+    
     setError("");
     setLoading(true);
 
     try {
       const formData = new URLSearchParams();
-      formData.append("username", cpfDigits);
+      formData.append("username", cleanIdentifier);
       formData.append("password", password);
 
       const data = await fetchApi("/login", {
@@ -54,7 +49,7 @@ export default function LoginPage() {
         router.push("/dashboard");
       }
     } catch (err: any) {
-      setError(err.message);
+      setError(err.message === "Unauthorized" ? "CPF/E-mail ou senha incorretos." : err.message);
     } finally {
       setLoading(false);
     }
@@ -67,7 +62,7 @@ export default function LoginPage() {
           <Leaf className={styles.logoIcon} />
           <h1 className={styles.vintageTitle}>NutriSmart</h1>
         </div>
-        <p className={styles.vintageSubtitle}>Entre com seu CPF para acessar sua conta</p>
+        <p className={styles.vintageSubtitle}>Acesse com seu CPF ou E-mail</p>
 
         {error && (
           <div className={styles.errorMessage}>
@@ -78,18 +73,17 @@ export default function LoginPage() {
 
         <form onSubmit={handleLogin}>
           <div className={styles.vintageInputGroup}>
-            <label className={styles.vintageLabel} htmlFor="cpf">
+            <label className={styles.vintageLabel} htmlFor="identifier">
               <IdCard className="w-4 h-4 inline mr-1" />
-              CPF
+              Identificação
             </label>
             <input
-              id="cpf"
+              id="identifier"
               type="text"
-              inputMode="numeric"
               className={styles.vintageInput}
               value={cpf}
-              onChange={handleCpfChange}
-              placeholder="000.000.000-00"
+              onChange={(e) => setCpf(e.target.value)}
+              placeholder="CPF ou E-mail"
               required
             />
           </div>
@@ -126,6 +120,7 @@ export default function LoginPage() {
           Ainda não tem conta? <Link href="/register" className={styles.loginLink}>Cadastre-se</Link>
         </p>
       </div>
+      <ThemeToggle />
     </div>
   );
 }

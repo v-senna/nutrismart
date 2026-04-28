@@ -27,31 +27,31 @@
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
-/* ===== MODO CLARO ===== */
+/* ===== MODO CLARO (Vintage Parchment) ===== */
 [data-theme="light"] {
-  --background: #f8fafc;    /* Slate 50 - Fundo mais limpo e profissional */
-  --foreground: #0f172a;    /* Slate 900 */
+  --background: #f4f1ea;    /* Tom de pergaminho claro */
+  --foreground: #2d2a26;    /* Marrom carvão para texto */
   
-  --primary: #10b981;       /* Emerald 500 - Cor vibrante mas profissional */
-  --primary-hover: #059669; /* Emerald 600 */
-  --secondary: #6366f1;     /* Indigo 500 - Contraste elegante com o verde */
+  --primary: #5a6648;       /* Verde musgo vintage */
+  --primary-hover: #4a543b; 
+  --secondary: #c76d54;     /* Terracota vintage */
   
-  --card-bg: #ffffff;
-  --card-border: #e2e8f0;
+  --card-bg: #fdfbf7;
+  --card-border: #dcd7ca;
   
   --input-bg: #ffffff;
-  --input-border: #cbd5e1;
+  --input-border: #c8c2b5;
   
-  --error: #ef4444;
-  --success: #10b981;
-  --warning: #f59e0b;
+  --error: #af3a3a;
+  --success: #5a6648;
+  --warning: #b38600;
 
-  --primary-foreground: #ffffff; /* Branco no Emerald */
+  --primary-foreground: #f4f1ea; 
 
-  --muted: #64748b;         /* Slate 500 */
-  --chart-axis: #94a3b8;    /* Slate 400 */
-  --tooltip-bg: #ffffff;
-  --meal-bg: #f1f5f9;       /* Slate 100 */
+  --muted: #8a817c;         /* Cinza sépia */
+  --chart-axis: #a8a096;    
+  --tooltip-bg: #fdfbf7;
+  --meal-bg: #ece9df;       /* Bege suave para cards de refeição */
 }
 
 
@@ -97,8 +97,8 @@ a {
 
 @media (max-width: 640px) {
   .glass-card {
-    padding: 1.25rem;
-    border-radius: 12px;
+    padding: 1rem;
+    border-radius: 10px;
   }
   
   h1 { font-size: 1.5rem !important; }

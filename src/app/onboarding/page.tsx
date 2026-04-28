@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 import { ClipboardList, Ruler, Target, Salad, ArrowLeft, ArrowRight, Rocket, CheckCircle } from "lucide-react";
 import styles from "./onboarding.module.css";
+import ThemeToggle from "@/components/ThemeToggle";
 
 export default function OnboardingPage() {
   const router = useRouter();
@@ -284,6 +285,7 @@ export default function OnboardingPage() {
           )}
         </div>
       </div>
+      <ThemeToggle />
     </div>
   );
 }

@@ -54,6 +54,7 @@ function ToastContainer({ toasts, remove }: { toasts: ToastItem[]; remove: (id: 
   );
 }
 import styles from "./dashboard.module.css";
+import ThemeToggle from "@/components/ThemeToggle";
 
 // ---------------------
 // Helpers
@@ -332,13 +333,18 @@ export default function DashboardPage() {
             gap: "1rem",
           }}
         >
-          <div>
-            <h1 style={{ fontSize: "1.875rem", fontWeight: "bold", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              {userName ? <>Olá, {userName} <Hand className="text-primary" size={24} /></> : "Meu Plano Nutricional"}
-            </h1>
-            <p style={{ color: "var(--muted)", fontSize: "0.875rem" }}>
-              Evolução e metas personalizadas
-            </p>
+          <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
+                <h1 style={{ fontSize: "1.875rem", fontWeight: "bold", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                  {userName ? <>Olá, {userName} <Hand className="text-primary" size={24} /></> : "Meu Plano Nutricional"}
+                </h1>
+                <ThemeToggle inline />
+              </div>
+              <p style={{ color: "var(--muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+                Evolução e metas personalizadas
+              </p>
+            </div>
           </div>
           <div className={`${styles.headerButtons} print-hide`}>
             <button
@@ -401,7 +407,7 @@ export default function DashboardPage() {
             <div className="glass-card" style={{ 
               padding: "1rem", 
               border: "2px solid var(--primary)", 
-              background: "rgba(16, 185, 129, 0.05)",
+              background: "color-mix(in srgb, var(--primary), transparent 95%)",
               display: "flex",
               flexDirection: "column",
               gap: "1rem"
@@ -444,7 +450,7 @@ export default function DashboardPage() {
                       {currentMealInfo.meal.calories} kcal | P: <strong>{currentMealInfo.meal.protein}g</strong> | C: <strong>{currentMealInfo.meal.carbs}g</strong> | G: <strong>{currentMealInfo.meal.fat}g</strong>
                     </div>
                   </div>
-                  <div style={{ background: "rgba(0,255,115,0.05)", padding: "0.75rem", borderRadius: "8px", fontSize: "0.8rem", border: "1px solid rgba(0,255,115,0.2)" }}>
+                  <div style={{ background: "color-mix(in srgb, var(--primary), transparent 95%)", padding: "0.75rem", borderRadius: "8px", fontSize: "0.8rem", border: "1px solid color-mix(in srgb, var(--primary), transparent 80%)" }}>
                     <span style={{ color: "var(--primary)", fontWeight: "600", display: "block", marginBottom: "0.25rem" }}>🔄 Opções de Troca:</span>
                     <div style={{ color: "var(--foreground)", lineHeight: "1.4" }}>
                       {currentMealInfo.meal.substitutions ? (
@@ -701,10 +707,133 @@ export default function DashboardPage() {
           )}
         </div>{/* end weight log */}
 
-        {/* 4️⃣+5️⃣ Main Grid (bio+tips LEFT | meals RIGHT) */}
-        <div className={styles.dashboardGrid}>
-          {/* Summary + Tips (mobile: order 4) */}
-          <div className={`glass-card print-hide ${styles.orderMobileFourth}`}>
+        <div className={styles.dashboardGridStack}>
+          {/* 4️⃣ Meals Column (mobile: order 4) */}
+          <div className={`glass-card ${styles.orderMobileFourth}`}>
+            <h2 style={{ fontSize: "1.25rem", marginBottom: "1.5rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <Utensils size={20} /> Planejamento de Refeições
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
+              {meals.map((meal: any, idx: number) => {
+                const mealLabel = meal.label.toUpperCase();
+                const mealImages: Record<string, string> = {
+                  "CAFÉ DA MANHÃ": "/images/cafe.png",
+                  "ALMOÇO": "/images/almoco.png",
+                  "JANTAR": "/images/jantar.png",
+                  "LANCHE DA MANHÃ": "/images/lanche.png",
+                  "LANCHE DA TARDE": "/images/lanche.png",
+                  "CEIA": "/images/ceia.png",
+                  "PRÉ-TREINO": "/images/pre_treino.png",
+                  "PÓS-TREINO": "/images/lanche.png",
+                };
+                const imageUrl = mealImages[mealLabel] || "/images/lanche.png";
+
+                return (
+                  <div
+                    key={idx}
+                    className={styles.mealCard}
+                    style={{
+                      background: "var(--meal-bg)",
+                      padding: "0",
+                      borderRadius: "16px",
+                      border: "1px solid var(--card-border)",
+                      overflow: "hidden",
+                      transition: "transform 0.2s ease",
+                    }}
+                  >
+                    {/* Imagem Figurativa */}
+                    <div style={{ width: "100%", height: "140px", position: "relative" }}>
+                      <img 
+                        src={imageUrl} 
+                        alt={meal.label} 
+                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                      />
+                      <div style={{ 
+                        position: "absolute", 
+                        bottom: "0", 
+                        left: "0", 
+                        right: "0", 
+                        background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)", 
+                        padding: "1rem",
+                        color: "white"
+                      }}>
+                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                          <span style={{ fontWeight: "bold", fontSize: "1.1rem", textTransform: "uppercase", letterSpacing: "1px" }}>
+                            {meal.label}
+                          </span>
+                          <span style={{ background: "var(--primary)", color: "black", padding: "0.2rem 0.6rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold" }}>
+                            {meal.time}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{ padding: "1.25rem" }}>
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
+                        <div style={{ fontSize: "0.95rem", color: "var(--foreground)", fontWeight: "500", lineHeight: "1.5" }}>
+                          {meal.suggestion}
+                        </div>
+                        <button
+                          onClick={() => setMealExpanded(prev => ({ ...prev, [idx]: !prev[idx] }))}
+                          style={{
+                            background: "transparent",
+                            border: "1px solid var(--card-border)",
+                            borderRadius: "8px",
+                            color: "var(--muted)",
+                            fontSize: "0.75rem",
+                            padding: "0.25rem 0.5rem",
+                            cursor: "pointer",
+                            transition: "all 0.2s",
+                            display: "flex",
+                            alignItems: "center",
+                            gap: "0.3rem",
+                            flexShrink: 0,
+                            marginLeft: "1rem"
+                          }}
+                        >
+                          {mealExpanded[idx] ? <ChevronUp size={14} /> : <RefreshCw size={12} />}
+                        </button>
+                      </div>
+
+                      {mealExpanded[idx] && (
+                        <div
+                          style={{
+                            marginBottom: "1rem",
+                            padding: "0.75rem",
+                            background: "color-mix(in srgb, var(--primary), transparent 95%)",
+                            border: "1px solid color-mix(in srgb, var(--primary), transparent 80%)",
+                            borderRadius: "8px",
+                            fontSize: "0.82rem",
+                          }}
+                        >
+                          <span style={{ color: "var(--primary)", fontWeight: "600", display: "block", marginBottom: "0.25rem" }}>🔄 Sugestões de Troca:</span>
+                          <div style={{ color: "var(--foreground)", lineHeight: "1.4" }}>
+                            {meal.substitutions ? (
+                              meal.substitutions.split('\n').map((line: string, i: number) => (
+                                <div key={i}>{line}</div>
+                              ))
+                            ) : "Mantenha a proporção de macros com alimentos similares."}
+                          </div>
+                        </div>
+                      )}
+
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--card-border)", paddingTop: "0.75rem" }}>
+                        <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.8rem", color: "var(--muted)" }}>
+                          <span>{meal.calories} kcal</span>
+                          <span>P: <strong>{meal.protein}g</strong></span>
+                          <span>C: <strong>{meal.carbs}g</strong></span>
+                          <span>G: <strong>{meal.fat}g</strong></span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 5️⃣ Summary + Tips (mobile: order 5) */}
+          <div className={`glass-card print-hide ${styles.orderMobileFifth}`}>
             <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <Dna size={20} /> Resumo Biológico
             </h2>
@@ -833,137 +962,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Meals Column (mobile: order 5) */}
-          <div className={`glass-card ${styles.orderMobileFifth}`}>
-            <h2 style={{ fontSize: "1.25rem", marginBottom: "1.5rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <Utensils size={20} /> Planejamento de Refeições
-            </h2>
-            <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-              {meals.map((meal: any, idx: number) => {
-                const mealLabel = meal.label.toUpperCase();
-                const mealImages: Record<string, string> = {
-                  "CAFÉ DA MANHÃ": "/images/cafe.png",
-                  "ALMOÇO": "/images/almoco.png",
-                  "JANTAR": "/images/jantar.png",
-                  "LANCHE DA MANHÃ": "/images/lanche.png",
-                  "LANCHE DA TARDE": "/images/lanche.png",
-                  "CEIA": "/images/ceia.png",
-                  "PRÉ-TREINO": "/images/pre_treino.png",
-                  "PÓS-TREINO": "/images/lanche.png", // Reuse lanche as pos-treino quota was exhausted
-                };
-                const imageUrl = mealImages[mealLabel] || "/images/lanche.png";
-
-                return (
-                  <div
-                    key={idx}
-                    className={styles.mealCard}
-                    style={{
-                      background: "var(--meal-bg)",
-                      padding: "0",
-                      borderRadius: "16px",
-                      border: "1px solid var(--card-border)",
-                      overflow: "hidden",
-                      transition: "transform 0.2s ease",
-                    }}
-                  >
-                    {/* Imagem Figurativa */}
-                    <div style={{ width: "100%", height: "140px", position: "relative" }}>
-                      <img 
-                        src={imageUrl} 
-                        alt={meal.label} 
-                        style={{ width: "100%", height: "100%", objectFit: "cover" }}
-                      />
-                      <div style={{ 
-                        position: "absolute", 
-                        bottom: "0", 
-                        left: "0", 
-                        right: "0", 
-                        background: "linear-gradient(to top, rgba(0,0,0,0.8), transparent)", 
-                        padding: "1rem",
-                        color: "white"
-                      }}>
-                        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: "bold", fontSize: "1.1rem", textTransform: "uppercase", letterSpacing: "1px" }}>
-                            {meal.label}
-                          </span>
-                          <span style={{ background: "var(--primary)", color: "black", padding: "0.2rem 0.6rem", borderRadius: "6px", fontSize: "0.75rem", fontWeight: "bold" }}>
-                            {meal.time}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={{ padding: "1.25rem" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
-                        <div style={{ fontSize: "0.95rem", color: "var(--foreground)", fontWeight: "500", lineHeight: "1.5" }}>
-                          {meal.suggestion}
-                        </div>
-                        <button
-                          onClick={() => setMealExpanded(prev => ({ ...prev, [idx]: !prev[idx] }))}
-                          style={{
-                            background: "transparent",
-                            border: "1px solid var(--card-border)",
-                            borderRadius: "8px",
-                            color: "var(--muted)",
-                            fontSize: "0.75rem",
-                            padding: "0.25rem 0.5rem",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                            display: "flex",
-                            alignItems: "center",
-                            gap: "0.3rem",
-                            flexShrink: 0,
-                            marginLeft: "1rem"
-                          }}
-                        >
-                          {mealExpanded[idx] ? <ChevronUp size={14} /> : <RefreshCw size={12} />}
-                        </button>
-                      </div>
-
-                      {mealExpanded[idx] && (
-                        <div
-                          style={{
-                            marginBottom: "1rem",
-                            padding: "0.75rem",
-                            background: "rgba(0,255,115,0.05)",
-                            border: "1px solid rgba(0,255,115,0.2)",
-                            borderRadius: "8px",
-                            fontSize: "0.82rem",
-                          }}
-                        >
-                          <span style={{ color: "var(--primary)", fontWeight: "600", display: "block", marginBottom: "0.25rem" }}>🔄 Sugestões de Troca:</span>
-                          <div style={{ color: "var(--foreground)", lineHeight: "1.4" }}>
-                            {meal.substitutions ? (
-                              meal.substitutions.split('\n').map((line: string, i: number) => (
-                                <div key={i}>{line}</div>
-                              ))
-                            ) : "Mantenha a proporção de macros com alimentos similares."}
-                          </div>
-                        </div>
-                      )}
-
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", borderTop: "1px solid var(--card-border)", paddingTop: "0.75rem" }}>
-                        <div style={{ display: "flex", gap: "0.75rem", fontSize: "0.8rem", color: "var(--muted)" }}>
-                          <span>{meal.calories} kcal</span>
-                          <span>P: <strong>{meal.protein}g</strong></span>
-                          <span>C: <strong>{meal.carbs}g</strong></span>
-                          <span>G: <strong>{meal.fat}g</strong></span>
-                        </div>
-                        <div style={{ display: "flex", gap: "2px" }}>
-                          {[...Array(3)].map((_, i) => (
-                            <div key={i} style={{ width: "4px", height: "4px", borderRadius: "50%", background: i === 0 ? "var(--primary)" : "var(--card-border)" }} />
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Macro Goals */}
-          <div className="glass-card" style={{ gridColumn: "span 2" }}>
+          {/* 6️⃣ Meta Diária (Last Part) */}
+          <div className={`glass-card ${styles.orderMobileSixth}`}>
             <h2 style={{ fontSize: "1.25rem", marginBottom: "0.5rem", color: "var(--primary)" }}>
               Meta Diária
             </h2>
@@ -991,8 +991,7 @@ export default function DashboardPage() {
               </div>
             </div>
           </div>
-
-        </div>{/* end dashboardGrid */}
+        </div>{/* end dashboardGridStack */}
 
         </div>{/* end dashboardMobileWrap */}
       </div>
