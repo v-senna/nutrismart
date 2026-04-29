@@ -226,11 +226,25 @@ def log_weight(log: WeightLogCreate, current_user: User = Depends(get_current_us
             duration_weeks = (profile.project_duration_months or 12) * 4
             new_projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
 
+            # Recalcular também as macros e as refeições
+            plan_data = generate_nutritional_plan(
+                profile.goals,
+                tdee,
+                weight=profile.weight,
+                meals_per_day=profile.meals_per_day or 4,
+                first_meal_time=profile.first_meal_time or "07:00"
+            )
+
             plan.tmb = tmb
             plan.tdee = tdee
             plan.imc = bmi
             plan.imc_classification = bmi_class
             plan.water_recommendation = water
+            plan.target_calories = plan_data["calories_target"]
+            plan.target_protein = plan_data["protein_target"]
+            plan.target_carbs = plan_data["carbs_target"]
+            plan.target_fats = plan_data["fats_target"]
+            plan.meals_json = json.dumps(plan_data["meals"])
             plan.projection_data = json.dumps(new_projection)
 
     db.commit()

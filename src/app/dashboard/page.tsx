@@ -832,42 +832,49 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* 5️⃣ Summary + Tips (mobile: order 5) */}
+          {/* 5️⃣ Relatório Técnico + Dicas (mobile: order 5) */}
           <div className={`glass-card print-hide ${styles.orderMobileFifth}`}>
-            <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <Dna size={20} /> Resumo Biológico
-            </h2>
-            {[
-              { label: "IMC", value: plan.imc },
-              { label: "Classificação IMC", value: plan.imc_classification || "—" },
-              { label: "Taxa Metabólica Basal", value: `${plan.tmb} kcal` },
-              { label: "Gasto Diário (TDEE)", value: `${plan.tdee} kcal` },
-              {
-                label: "Água Recomendada",
-                value: `${(plan.water_recommendation / 1000).toFixed(1)} Litros`,
-              },
-            ].map(({ label, value }) => {
-              const isImcClass = label === "Classificação IMC";
-              const isAlert = isImcClass && (String(value).includes("Desnutrição") || String(value).includes("Obesidade") || String(value).includes("Baixo peso") || String(value).includes("Magreza"));
-              const isOk = isImcClass && (String(value).includes("Normal") || String(value).includes("Peso normal"));
-              return (
-                <div key={label} className={styles.statRow}>
-                  <span className={styles.statLabel}>{label}</span>
-                  <span
-                    style={{
-                      fontWeight: "bold",
-                      color: isImcClass ? (isAlert ? "#f87171" : isOk ? "var(--primary)" : "#fbbf24") : undefined,
-                      background: isImcClass ? (isAlert ? "rgba(248,113,113,0.1)" : isOk ? "rgba(0,255,115,0.1)" : "rgba(251,191,36,0.1)") : undefined,
-                      padding: isImcClass ? "0.15rem 0.5rem" : undefined,
-                      borderRadius: isImcClass ? "20px" : undefined,
-                      fontSize: isImcClass ? "0.8rem" : undefined,
-                    }}
-                  >
-                    {value}
-                  </span>
-                </div>
-              );
-            })}
+            <div className={styles.technicalHeader}>
+              <h2 style={{ fontSize: "1.25rem", color: "var(--primary)", margin: 0, display: "flex", alignItems: "center", gap: "0.5rem" }}>
+                <Dna size={20} /> Relatório Técnico
+              </h2>
+              <span style={{ fontSize: "0.65rem", color: "var(--muted)", textTransform: "uppercase" }}>Ref: Mifflin-St Jeor / OMS</span>
+            </div>
+            
+            <table className={styles.nutritionTable}>
+              <thead>
+                <tr>
+                  <th>Indicador</th>
+                  <th>Valor Calculado</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Índice de Massa Corporal (IMC)</td>
+                  <td style={{ fontWeight: "bold" }}>{plan.imc} <small style={{ fontWeight: "normal", opacity: 0.7 }}>({plan.imc_classification})</small></td>
+                </tr>
+                <tr>
+                  <td>Taxa Metabólica Basal (TMB)</td>
+                  <td>{plan.tmb} kcal/dia</td>
+                </tr>
+                <tr>
+                  <td>Gasto Calórico Total (TDEE)</td>
+                  <td>{plan.tdee} kcal/dia</td>
+                </tr>
+                <tr>
+                  <td>Meta de Ingestão Diária</td>
+                  <td style={{ color: "var(--primary)", fontWeight: "bold" }}>{plan.target_calories} kcal</td>
+                </tr>
+                <tr>
+                  <td>Hidratação Mínima Recom.</td>
+                  <td>{((plan.water_recommendation || 0) / 1000).toFixed(1)} Litros/dia</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className={styles.disclaimer}>
+              * Este planejamento foi gerado algoritmicamente com base nas diretrizes da Organização Mundial da Saúde (OMS) e equações preditivas de Mifflin-St Jeor. Para condições clínicas específicas, consulte um nutricionista registrado.
+            </div>
 
             {/* Tips Carousel */}
             <div

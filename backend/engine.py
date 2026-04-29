@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 
 
 def calculate_tmb(gender: str, weight: float, height: float, age: int) -> float:
+    # Fórmula de Mifflin-St Jeor (Padrão ouro na nutrição moderna)
     base = (10 * weight) + (6.25 * height) - (5 * age)
     if gender.upper() == 'M':
         return round(base + 5, 1)
@@ -12,10 +13,11 @@ def calculate_tmb(gender: str, weight: float, height: float, age: int) -> float:
 
 def calculate_tdee(tmb: float, activity_level: str) -> float:
     multipliers = {
-        "Sedentário": 1.2,
-        "Leve": 1.375,
-        "Moderado": 1.55,
-        "Intenso": 1.725,
+        "Sedentário": 1.2,       # Pouco ou nenhum exercício
+        "Leve": 1.375,           # Exercício leve 1-3 dias/semana
+        "Moderado": 1.55,        # Exercício moderado 3-5 dias/semana
+        "Intenso": 1.725,        # Exercício pesado 6-7 dias/semana
+        "Atleta": 1.9            # Exercício muito pesado ou trabalho físico
     }
     return round(tmb * multipliers.get(activity_level, 1.2), 1)
 
@@ -37,33 +39,49 @@ def calculate_water_recommendation(weight: float) -> float:
     return weight * 35  # 35 ml por kg
 
 
-def _distribute_macros(total_calories: float, protein_g: float, fat_g: float, weight: float):
-    """Distribui macros totais em gramas a partir do TDEE e fatores por kg."""
-    p_g  = round(protein_g * weight)
-    f_g  = round(fat_g * weight)
+def _distribute_macros(total_calories: float, goal: str, weight: float):
+    """
+    Distribui macros com base em diretrizes nutricionais clínicas.
+    Proteína: 1.8g a 2.4g/kg dependendo do objetivo.
+    Gordura: 20% a 30% das calorias totais.
+    Carboidratos: O restante das calorias.
+    """
+    if goal == "Emagrecimento":
+        p_g_kg = 2.2 # Preservar massa magra no déficit
+        f_pct = 0.25 # 25% de gordura
+    elif goal in ("Hipertrofia", "Ganho de Massa Muscular"):
+        p_g_kg = 2.0 # Suficiente para síntese proteica no superávit
+        f_pct = 0.25 # 25% de gordura
+    else: # Manutenção
+        p_g_kg = 1.8
+        f_pct = 0.30 # 30% de gordura
+
+    p_g = round(p_g_kg * weight)
     p_kcal = p_g * 4
-    f_kcal = f_g * 9
-    c_kcal = max(0, total_calories - p_kcal - f_kcal)
-    c_g   = round(c_kcal / 4)
+    
+    f_kcal = total_calories * f_pct
+    f_g = round(f_kcal / 9)
+    
+    c_kcal = max(0, total_calories - p_kcal - (f_g * 9))
+    c_g = round(c_kcal / 4)
+    
     return p_g, c_g, f_g
 
 
 def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
                                meals_per_day: int = 4, first_meal_time: str = "07:00"):
-    # ---------- Macros por objetivo ----------
+    # ---------- Cálculo de Calorias Alvo (Déficit/Superávit) ----------
     if goal == "Emagrecimento":
-        target_calories = round(tdee - 500)
-        protein_g_per_kg, fat_g_per_kg = 2.0, 0.8
+        # Déficit moderado de 20% (mais seguro que fixo de 500)
+        target_calories = round(tdee * 0.8)
+        # Garantir que não fique abaixo da TMB por segurança
     elif goal in ("Hipertrofia", "Ganho de Massa Muscular"):
-        target_calories = round(tdee + 300)
-        protein_g_per_kg, fat_g_per_kg = 2.2, 1.0
-    else:  # Manutenção
+        # Superávit moderado de 10-15%
+        target_calories = round(tdee * 1.1)
+    else:
         target_calories = round(tdee)
-        protein_g_per_kg, fat_g_per_kg = 1.8, 1.0
 
-    total_protein, total_carbs, total_fats = _distribute_macros(
-        target_calories, protein_g_per_kg, fat_g_per_kg, weight
-    )
+    total_protein, total_carbs, total_fats = _distribute_macros(target_calories, goal, weight)
 
     # ---------- Distribuição de refeições por horário ----------
     MEAL_TEMPLATES = [
@@ -160,52 +178,52 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
         is_loss = goal == "Emagrecimento"
         
         if "Café da Manhã" in label:
-            ovos = max(1, round(p / 6))
+            ovos = max(1, round(p / 6.5))
             if is_loss:
-                # Menos pão, mais fruta/fibras
                 pao = max(1, round((c * 0.4) / 12))
                 return f"Ovos mexidos ({ovos} und) + pão integral ({pao} fatia) + Mamão com aveia (150g)"
             else:
-                # Mais pão ou tapioca
-                pao = max(2, round((c * 0.7) / 12))
+                pao = max(2, round((c * 0.6) / 12))
                 return f"Ovos mexidos ({ovos} und) + pão integral ({pao} fatias) + Suco de laranja natural (200ml)"
                 
         elif "Lanche da Manhã" in label:
             if is_loss:
                 return f"1 Maçã ou Pera + Castanhas do Pará (2 und)"
             else:
-                return f"Iogurte Natural + Granola (40g) + 1 Banana"
+                granola = max(20, round(c / 0.6))
+                return f"Iogurte Natural + Granola ({granola}g) + 1 Banana"
                 
         elif "Almoço" in label:
-            frango = max(80, round(p / 0.3))
+            proteina_g = max(100, round(p / 0.25)) # Considerando ~25% de prot na carne cozida
             if is_loss:
-                arroz = max(50, round((c * 0.5) / 0.28))
-                vegetais = "Brócolis e Cenoura (à vontade)"
-                return f"Frango/Peixe grelhado ({frango}g) + arroz integral ({arroz}g) + {vegetais} + Azeite (1 col. chá)"
+                arroz = max(60, round((c * 0.5) / 0.25))
+                return f"Frango ou Peixe grelhado ({proteina_g}g) + arroz integral ({arroz}g) + Brócolis e Cenoura (à vontade) + Azeite (1 col. chá)"
             else:
-                arroz = max(120, round((c * 0.7) / 0.28))
-                feijao = max(80, round((c * 0.3) / 0.14))
-                return f"Carne bovina magra/Frango ({frango}g) + arroz ({arroz}g) + feijão ({feijao}g) + Salada mista"
+                arroz = max(150, round((c * 0.6) / 0.25))
+                feijao = max(100, round((c * 0.3) / 0.14))
+                return f"Carne bovina magra ({proteina_g}g) + arroz ({arroz}g) + feijão ({feijao}g) + Salada mista colorida"
                 
         elif "Lanche da Tarde" in label:
             if is_loss:
-                return f"Whey Protein (1 scoop) diluído em água + 10 morangos"
+                return f"Whey Protein (1 scoop) + 10 morangos ou 1 kiwi"
             else:
-                pao = max(2, round(c / 12))
-                return f"Sanduíche de frango desfiado (pão integral {pao} fatias) + Suco de uva integral"
+                pao = max(2, round((c * 0.5) / 12))
+                frango_desfiado = max(50, round(p / 0.25))
+                return f"Sanduíche de frango ({frango_desfiado}g) no pão integral ({pao} fatias) + Suco de uva integral (200ml)"
                 
         elif "Jantar" in label:
-            proteina = max(80, round(p / 0.3))
+            proteina_g = max(100, round(p / 0.25))
             if is_loss:
-                return f"Omelete (3 ovos) com espinafre e tomate + Mix de folhas verdes"
+                return f"Omelete (3 ovos) com espinafre e tomate + Mix de folhas verdes + Azeite de Oliva"
             else:
                 massa = max(100, round(c / 0.3))
-                return f"Macarrão integral ({massa}g) com patinho moído ({proteina}g) + Molho de tomate caseiro"
-        else:
+                return f"Macarrão integral ({massa}g) com patinho moído ({proteina_g}g) + Molho de tomate natural e manjericão"
+        else: # Ceia
             if is_loss:
-                return f"Iogurte desnatado (200g) ou Caseína"
+                return f"Iogurte desnatado (200g) ou Mix de nozes (20g)"
             else:
-                return f"Abacate (100g) com Whey Protein ou Leite integral"
+                abacate = max(80, round(f / 0.15))
+                return f"Abacate ({abacate}g) com Whey Protein ou Leite integral com mel"
 
     meals = []
     for tmpl in selected:
