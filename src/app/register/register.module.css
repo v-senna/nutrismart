@@ -4,20 +4,21 @@
   align-items: center;
   justify-content: center;
   padding: 2rem 1rem;
-  background-color: #1a1816;
-  background-image: radial-gradient(circle at 85% 50%, rgba(143, 151, 121, 0.08), transparent 25%),
-                    radial-gradient(circle at 15% 30%, rgba(224, 122, 95, 0.05), transparent 25%);
-  color: #e3dcd1;
+  background-color: var(--background);
+  background-image: radial-gradient(circle at 85% 50%, color-mix(in srgb, var(--primary), transparent 90%), transparent 25%),
+                    radial-gradient(circle at 15% 30%, color-mix(in srgb, var(--secondary), transparent 95%), transparent 25%);
+  color: var(--foreground);
 }
 
 .vintageCard {
   width: 100%;
   max-width: 520px;
-  background: #24221f;
-  border: 1px solid #38342f;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
   border-radius: 12px;
   padding: 2.5rem;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(10px);
 }
 
 .vintageInputGroup {
@@ -30,15 +31,15 @@
   font-size: 0.8rem;
   font-weight: 600;
   margin-bottom: 0.5rem;
-  color: #a8a096;
+  color: var(--muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
 }
 
 .vintageInput {
-  background-color: #1a1816;
-  border: 1px solid #423d38;
-  color: #e3dcd1;
+  background-color: var(--input-bg);
+  border: 1px solid var(--input-border);
+  color: var(--foreground);
   padding: 0.8rem 1rem;
   border-radius: 6px;
   font-size: 1rem;
@@ -48,24 +49,25 @@
 }
 
 .vintageInput::placeholder {
-  color: #6e6761;
+  opacity: 0.5;
 }
 
 .vintageInput:focus {
   outline: none;
-  border-color: #6a7356;
-  box-shadow: 0 0 0 3px rgba(106, 115, 86, 0.2);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary), transparent 80%);
 }
 
 .inputError {
-  border-color: #c53030 !important;
-  box-shadow: 0 0 0 2px rgba(197, 48, 48, 0.2) !important;
+  border-color: var(--error) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--error), transparent 80%) !important;
 }
 
 .fieldError {
   font-size: 0.78rem;
-  color: #ff8c8c;
+  color: var(--error);
   margin-top: 0.3rem;
+  opacity: 0.8;
 }
 
 .vintageButton {
@@ -79,23 +81,22 @@
   cursor: pointer;
   transition: all 0.3s ease;
   border: none;
-  background-color: #4a543b;
-  color: #e3dcd1;
+  background-color: var(--primary);
+  color: var(--primary-foreground);
   width: 100%;
   margin-top: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   gap: 0.5rem;
 }
 
 .vintageButton:hover:not(:disabled) {
-  background-color: #5a6648;
+  background-color: var(--primary-hover);
   transform: translateY(-2px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2);
 }
 
 .vintageButton:disabled {
-  background-color: #3f423a;
-  color: #888;
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -104,8 +105,7 @@
   margin-bottom: 0.5rem;
   font-size: 2rem;
   font-weight: 700;
-  color: #e3dcd1;
-  font-family: 'Georgia', serif;
+  color: var(--foreground);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -115,7 +115,7 @@
 .vintageSubtitle {
   text-align: center;
   margin-bottom: 2rem;
-  color: #9c9489;
+  color: var(--muted);
   font-size: 0.95rem;
 }
 
@@ -129,18 +129,18 @@
   text-align: center;
   margin-top: 1.5rem;
   font-size: 0.9rem;
-  color: #9c9489;
+  color: var(--muted);
 }
 
 .loginLink {
-  color: #c76d54;
+  color: var(--secondary);
   font-weight: 600;
-  transition: color 0.2s ease;
+  transition: opacity 0.2s ease;
   margin-left: 0.25rem;
 }
 
 .loginLink:hover {
-  color: #e08369;
+  opacity: 0.8;
   text-decoration: underline;
 }
 
