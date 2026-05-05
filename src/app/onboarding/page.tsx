@@ -6,12 +6,15 @@ import { fetchApi } from "@/lib/api";
 import { ClipboardList, Ruler, Target, Salad, ArrowLeft, ArrowRight, Rocket, CheckCircle } from "lucide-react";
 import styles from "./onboarding.module.css";
 import ThemeToggle from "@/components/ThemeToggle";
+import ImportDietModal from "@/components/ImportDietModal";
+import { FileUp } from "lucide-react";
 
 export default function OnboardingPage() {
   const router = useRouter();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const [profile, setProfile] = useState({
     age: 25,
@@ -26,7 +29,8 @@ export default function OnboardingPage() {
     goals: "Emagrecimento",
     meals_per_day: 4,
     project_duration_months: 3,
-    first_meal_time: "08:00"
+    first_meal_time: "08:00",
+    meal_times: ["08:00", "12:00", "16:00", "20:00"]
   });
 
   const [preferences, setPreferences] = useState({
@@ -46,7 +50,11 @@ export default function OnboardingPage() {
       try {
         const existingProfile = await fetchApi("/profile", { headers });
         if (Object.keys(existingProfile).length > 0) {
-          setProfile(prev => ({ ...prev, ...existingProfile }));
+          setProfile(prev => ({ 
+            ...prev, 
+            ...existingProfile,
+            meal_times: existingProfile.meal_times || prev.meal_times 
+          }));
         }
 
         const existingPrefs = await fetchApi("/preferences", { headers });
@@ -68,11 +76,58 @@ export default function OnboardingPage() {
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
 
   const handleProfileChange = (e: any) => {
-    setProfile({ ...profile, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    
+    if (name === "meals_per_day") {
+      const count = Math.min(6, Math.max(1, Number(value)));
+      const newTimes = [...profile.meal_times];
+      if (count > newTimes.length) {
+        for (let i = newTimes.length; i < count; i++) {
+          const lastTime = newTimes[newTimes.length - 1] || "08:00";
+          const [h, m] = lastTime.split(":").map(Number);
+          newTimes.push(`${String((h + 3) % 24).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+        }
+      } else {
+        newTimes.splice(count);
+      }
+      setProfile({ ...profile, meals_per_day: count, meal_times: newTimes });
+    } else {
+      setProfile({ ...profile, [name]: value });
+    }
+  };
+
+  const handleMealTimeChange = (index: number, value: string) => {
+    const newTimes = [...profile.meal_times];
+    newTimes[index] = value;
+    setProfile({ ...profile, meal_times: newTimes });
+    if (index === 0) {
+        setProfile(prev => ({ ...prev, first_meal_time: value, meal_times: newTimes }));
+    }
   };
   
   const handlePrefsChange = (e: any) => {
     setPreferences({ ...preferences, [e.target.name]: e.target.value });
+  };
+
+  const handleImportSuccess = (data: any) => {
+    // Fill Profile
+    const newProfile = { ...profile };
+    if (data.profile.age) newProfile.age = data.profile.age;
+    if (data.profile.weight) newProfile.weight = data.profile.weight;
+    if (data.profile.height) newProfile.height = data.profile.height;
+    if (data.profile.gender) newProfile.gender = data.profile.gender;
+    if (data.profile.goals) newProfile.goals = data.profile.goals;
+    
+    // Fill Meal Times if detected
+    if (data.meals && data.meals.length > 0) {
+      newProfile.meals_per_day = data.meals.length;
+      newProfile.meal_times = data.meals.map((m: any) => m.time || "08:00");
+    }
+    
+    setProfile(newProfile);
+    
+    // Step 2 is more relevant after import
+    setStep(2);
   };
 
   const submitData = async () => {
@@ -96,7 +151,7 @@ export default function OnboardingPage() {
           workout_duration: Number(profile.workout_duration),
           meals_per_day: Number(profile.meals_per_day),
           project_duration_months: Number(profile.project_duration_months),
-          first_meal_time: profile.first_meal_time
+          first_meal_time: profile.meal_times[0] || profile.first_meal_time
         })
       });
 
@@ -148,6 +203,16 @@ export default function OnboardingPage() {
           </div>
         </div>
 
+        <div className="flex justify-end mb-4">
+          <button 
+            className="btn btn-primary flex items-center gap-2 text-xs py-2"
+            onClick={() => setShowImportModal(true)}
+            style={{ background: 'var(--secondary)', color: 'white' }}
+          >
+            <FileUp size={14} /> Importar de PDF/Excel
+          </button>
+        </div>
+
         {error && <div className="text-center mb-4 text-red-500">{error}</div>}
 
         {step === 1 && (
@@ -181,12 +246,12 @@ export default function OnboardingPage() {
                 <input type="number" className="input-field" name="target_weight" value={profile.target_weight} onChange={handleProfileChange} />
               </div>
               <div className="input-group">
-                <label className="input-label">Nível de Atividade (Se o treino mudou, altere aqui)</label>
+                <label className="input-label">Nível de Atividade</label>
                 <select className="input-field" name="activity_level" value={profile.activity_level} onChange={handleProfileChange}>
                   <option value="Sedentário">Sedentário (Sem exercício)</option>
-                  <option value="Leve">Leve (1-2x semana / Diminuí o treino)</option>
-                  <option value="Moderado">Moderado (3-5x semana / Treino constante)</option>
-                  <option value="Intenso">Intenso (6-7x semana / Aumentei o treino)</option>
+                  <option value="Leve">Leve (1-2x semana)</option>
+                  <option value="Moderado">Moderado (3-5x semana)</option>
+                  <option value="Intenso">Intenso (6-7x semana)</option>
                 </select>
               </div>
             </div>
@@ -200,22 +265,22 @@ export default function OnboardingPage() {
               <div className={styles.radioGroup}>
                 <label className={styles.radioLabel}>
                   <input type="radio" name="goals" value="Emagrecimento" checked={profile.goals === "Emagrecimento"} onChange={handleProfileChange} />
-                  Emagrecimento (Déficit Calórico)
+                  Emagrecimento
                 </label>
                 <label className={styles.radioLabel}>
                   <input type="radio" name="goals" value="Ganho de Massa Muscular" checked={profile.goals === "Ganho de Massa Muscular"} onChange={handleProfileChange} />
-                  Ganho de Massa Muscular (Superávit Calórico)
+                  Ganho de Massa
                 </label>
                 <label className={styles.radioLabel}>
                   <input type="radio" name="goals" value="Manutenção" checked={profile.goals === "Manutenção"} onChange={handleProfileChange} />
-                  Manutenção de Peso Saudável
+                  Manutenção
                 </label>
               </div>
             </div>
             
             <div className={styles.rowGrid}>
               <div className="input-group">
-                <label className="input-label">Treinos por semana (Dias)</label>
+                <label className="input-label">Treinos por semana</label>
                 <input type="number" className="input-field" name="workout_days" value={profile.workout_days} onChange={handleProfileChange} />
               </div>
               <div className="input-group">
@@ -223,24 +288,36 @@ export default function OnboardingPage() {
                 <input type="number" className="input-field" name="meals_per_day" min="1" max="6" value={profile.meals_per_day} onChange={handleProfileChange} />
               </div>
             </div>
+
+            <div className="input-group">
+              <label className="input-label mb-2 block font-semibold text-primary">Horários das Refeições</label>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-3 bg-secondary/10 p-4 rounded-xl border border-primary/20">
+                {profile.meal_times.map((time, idx) => (
+                  <div key={idx} className="flex flex-col gap-1">
+                    <label className="text-xs font-medium opacity-70">Refeição {idx + 1}</label>
+                    <input 
+                      type="time" 
+                      className="input-field text-center" 
+                      value={time} 
+                      onChange={(e) => handleMealTimeChange(idx, e.target.value)} 
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+
             <div className={styles.rowGrid}>
               <div className="input-group">
-                <label className="input-label">Duração média do treino (Minutos)</label>
+                <label className="input-label">Duração do treino (Min)</label>
                 <input type="number" className="input-field" name="workout_duration" value={profile.workout_duration} onChange={handleProfileChange} />
               </div>
               <div className="input-group">
                 <label className="input-label">Duração do Plano (Meses)</label>
                 <select className="input-field" name="project_duration_months" value={profile.project_duration_months} onChange={handleProfileChange}>
-                  {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(m => (
+                  {[1, 2, 3, 4, 5, 6, 12].map(m => (
                     <option key={m} value={m}>{m} {m === 1 ? 'mês' : 'meses'}</option>
                   ))}
                 </select>
-              </div>
-            </div>
-            <div className={styles.rowGrid}>
-              <div className="input-group">
-                <label className="input-label">Horário da 1ª Refeição</label>
-                <input type="time" className="input-field" name="first_meal_time" value={profile.first_meal_time} onChange={handleProfileChange} />
               </div>
             </div>
           </div>
@@ -286,6 +363,12 @@ export default function OnboardingPage() {
         </div>
       </div>
       <ThemeToggle />
+      {showImportModal && (
+        <ImportDietModal 
+          onClose={() => setShowImportModal(false)} 
+          onImportSuccess={handleImportSuccess} 
+        />
+      )}
     </div>
   );
 }

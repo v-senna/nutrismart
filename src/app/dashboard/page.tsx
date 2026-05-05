@@ -31,7 +31,8 @@ import {
   BellOff,
   Droplet,
   CheckCircle2,
-  XCircle
+  XCircle,
+  FileUp
 } from "lucide-react";
 
 // ── Toast ──────────────────────────────────────────────────
@@ -55,6 +56,7 @@ function ToastContainer({ toasts, remove }: { toasts: ToastItem[]; remove: (id: 
 }
 import styles from "./dashboard.module.css";
 import ThemeToggle from "@/components/ThemeToggle";
+import ImportDietModal from "@/components/ImportDietModal";
 
 // ---------------------
 // Helpers
@@ -102,6 +104,7 @@ export default function DashboardPage() {
   const [mealExpanded, setMealExpanded] = useState<Record<number, boolean>>({});
   const [notificationMealExpanded, setNotificationMealExpanded] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [showImportModal, setShowImportModal] = useState(false);
 
   const addToast = (message: string, type: ToastType = "info") => {
     const id = ++_toastId;
@@ -215,6 +218,18 @@ export default function DashboardPage() {
     router.push("/login");
   };
   const handleRefazer = () => router.push("/onboarding");
+
+  const handleImportSuccess = (data: any) => {
+    // Para simplificar, quando importar pelo dashboard, levamos o usuário
+    // de volta para o onboarding mas já com os campos que conseguimos extrair.
+    // O onboarding já tem lógica para carregar dados existentes, mas aqui
+    // poderíamos passar via query params ou state se necessário.
+    // Por enquanto, apenas avisamos e redirecionamos.
+    addToast("Dados extraídos com sucesso! Redirecionando para ajuste...", "success");
+    setTimeout(() => {
+      router.push("/onboarding");
+    }, 1500);
+  };
 
   // Weight Log submit
   const handleWeightLog = async (e: React.FormEvent) => {
@@ -358,6 +373,17 @@ export default function DashboardPage() {
               }}
             >
               <FileText size={18} /> Exportar em PDF
+            </button>
+            <button
+              onClick={() => setShowImportModal(true)}
+              className="btn flex items-center gap-2"
+              style={{
+                background: "var(--secondary)",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            >
+              <FileUp size={18} /> Importar Dieta
             </button>
             <button
               onClick={handleRefazer}
@@ -1002,6 +1028,12 @@ export default function DashboardPage() {
 
         </div>{/* end dashboardMobileWrap */}
       </div>
+      {showImportModal && (
+        <ImportDietModal 
+          onClose={() => setShowImportModal(false)} 
+          onImportSuccess={handleImportSuccess} 
+        />
+      )}
     </div>
   );
 }

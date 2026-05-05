@@ -38,6 +38,7 @@ class HealthProfile(Base):
     meals_per_day = Column(Integer, default=4)
     project_duration_months = Column(Integer, default=12)
     first_meal_time = Column(String, default="08:00")
+    meal_times = Column(JSON, nullable=True) # Ex: ["08:00", "12:00", "16:00", "20:00"]
 
     user = relationship("User", back_populates="health_profile")
 

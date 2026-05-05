@@ -69,7 +69,8 @@ def _distribute_macros(total_calories: float, goal: str, weight: float):
 
 
 def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
-                               meals_per_day: int = 4, first_meal_time: str = "07:00"):
+                               meals_per_day: int = 4, first_meal_time: str = "07:00",
+                               meal_times: list = None):
     # ---------- Cálculo de Calorias Alvo (Déficit/Superávit) ----------
     if goal == "Emagrecimento":
         # Déficit moderado de 20% (mais seguro que fixo de 500)
@@ -226,15 +227,19 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
                 return f"Abacate ({abacate}g) com Whey Protein ou Leite integral com mel"
 
     meals = []
-    for tmpl in selected:
+    for i, tmpl in enumerate(selected):
         share = tmpl["macro_share"] / total_share
         cal   = round(target_calories * share)
         prot  = round(total_protein   * share)
         carbs = round(total_carbs     * share)
         fat   = round(total_fats      * share)
 
-        meal_h = (base_h + tmpl["offset_hours"]) % 24
-        time_str = f"{meal_h:02d}:{base_m:02d}"
+        # Usar horário definido pelo usuário se existir, senão calcular
+        if meal_times and i < len(meal_times) and meal_times[i]:
+            time_str = meal_times[i]
+        else:
+            meal_h = (base_h + tmpl["offset_hours"]) % 24
+            time_str = f"{meal_h:02d}:{base_m:02d}"
 
         meals.append({
             "time":          time_str,

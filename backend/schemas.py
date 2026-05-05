@@ -39,6 +39,7 @@ class HealthProfileCreate(BaseModel):
     meals_per_day: int
     project_duration_months: int = 12
     first_meal_time: str = "08:00"
+    meal_times: Optional[List[str]] = None
 
 class DietaryPreferencesCreate(BaseModel):
     restrictions: List[str]

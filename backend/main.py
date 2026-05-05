@@ -19,6 +19,8 @@ from engine import (
     generate_weight_projection,
     calculate_water_recommendation
 )
+from ai_utils import extract_text_from_pdf, extract_text_from_excel, parse_diet_info
+from fastapi import UploadFile, File
 
 # Criar tabelas se não existirem
 Base.metadata.create_all(bind=engine)
@@ -164,7 +166,8 @@ def generate_plan(current_user: User = Depends(get_current_user), db: Session = 
         tdee,
         weight=profile.weight,
         meals_per_day=profile.meals_per_day or 4,
-        first_meal_time=profile.first_meal_time or "07:00"
+        first_meal_time=profile.first_meal_time or "07:00",
+        meal_times=profile.meal_times
     )
     duration_weeks = profile.project_duration_months * 4
     projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
@@ -187,6 +190,24 @@ def generate_plan(current_user: User = Depends(get_current_user), db: Session = 
     db.add(db_plan)
     db.commit()
     return {"message": "Plan generated successfully"}
+
+@app.post("/import-diet")
+async def import_diet(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    content = await file.read()
+    filename = file.filename.lower()
+    
+    try:
+        if filename.endswith(".pdf"):
+            text = extract_text_from_pdf(content)
+        elif filename.endswith((".xlsx", ".xls")):
+            text = extract_text_from_excel(content)
+        else:
+            raise HTTPException(status_code=400, detail="Formato de arquivo não suportado. Use PDF ou Excel.")
+        
+        extracted_data = parse_diet_info(text)
+        return extracted_data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
 
 @app.get("/my-plan")
 def get_plan(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -232,7 +253,8 @@ def log_weight(log: WeightLogCreate, current_user: User = Depends(get_current_us
                 tdee,
                 weight=profile.weight,
                 meals_per_day=profile.meals_per_day or 4,
-                first_meal_time=profile.first_meal_time or "07:00"
+                first_meal_time=profile.first_meal_time or "07:00",
+                meal_times=profile.meal_times
             )
 
             plan.tmb = tmb
