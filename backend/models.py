@@ -39,6 +39,10 @@ class HealthProfile(Base):
     project_duration_months = Column(Integer, default=12)
     first_meal_time = Column(String, default="08:00")
     meal_times = Column(JSON, nullable=True) # Ex: ["08:00", "12:00", "16:00", "20:00"]
+    imported_calories = Column(Float, nullable=True)
+    imported_protein = Column(Float, nullable=True)
+    imported_carbs = Column(Float, nullable=True)
+    imported_fats = Column(Float, nullable=True)
 
     user = relationship("User", back_populates="health_profile")
 

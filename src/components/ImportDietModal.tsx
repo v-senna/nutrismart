@@ -15,6 +15,7 @@ export default function ImportDietModal({ onClose, onImportSuccess }: ImportDiet
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
+  const [editedProfile, setEditedProfile] = useState<any>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -49,6 +50,7 @@ export default function ImportDietModal({ onClose, onImportSuccess }: ImportDiet
 
       const data = await response.json();
       setResult(data);
+      setEditedProfile({ ...data.profile });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -57,8 +59,12 @@ export default function ImportDietModal({ onClose, onImportSuccess }: ImportDiet
   };
 
   const confirmImport = () => {
-    onImportSuccess(result);
+    onImportSuccess({ ...result, profile: editedProfile });
     onClose();
+  };
+
+  const handleProfileChange = (field: string, value: any) => {
+    setEditedProfile((prev: any) => ({ ...prev, [field]: value }));
   };
 
   return (
@@ -98,17 +104,74 @@ export default function ImportDietModal({ onClose, onImportSuccess }: ImportDiet
         ) : (
           <div className="fade-in">
             <div className="bg-primary/10 p-4 rounded-xl mb-6 border border-primary/20">
-              <h3 className="font-bold flex items-center gap-2 text-primary mb-2">
-                <CheckCircle size={18} /> Análise Concluída!
+              <h3 className="font-bold flex items-center gap-2 text-primary mb-4">
+                <CheckCircle size={18} /> Verifique as Informações
               </h3>
-              <p className="text-sm">Encontramos as seguintes informações:</p>
               
-              <ul className={styles.extractedList}>
-                <li><strong>Idade:</strong> {result.profile.age || <span className="text-red-400">Não encontrado</span>}</li>
-                <li><strong>Peso:</strong> {result.profile.weight ? `${result.profile.weight}kg` : <span className="text-red-400">Não encontrado</span>}</li>
-                <li><strong>Meta:</strong> {result.profile.goals || <span className="text-red-400">Não encontrado</span>}</li>
-                <li><strong>Refeições:</strong> {result.meals.length} detectadas</li>
-              </ul>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-muted">Idade</label>
+                  <input 
+                    type="number" 
+                    className={styles.miniInput} 
+                    value={editedProfile?.age || ""} 
+                    onChange={(e) => handleProfileChange("age", e.target.value)}
+                    placeholder="Não encontrado"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-muted">Peso (kg)</label>
+                  <input 
+                    type="number" 
+                    step="0.1"
+                    className={styles.miniInput} 
+                    value={editedProfile?.weight || ""} 
+                    onChange={(e) => handleProfileChange("weight", e.target.value)}
+                    placeholder="Não encontrado"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-muted">Altura (cm)</label>
+                  <input 
+                    type="number" 
+                    className={styles.miniInput} 
+                    value={editedProfile?.height || ""} 
+                    onChange={(e) => handleProfileChange("height", e.target.value)}
+                    placeholder="Não encontrado"
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs text-muted">Gênero</label>
+                  <select 
+                    className={styles.miniInput} 
+                    value={editedProfile?.gender || ""} 
+                    onChange={(e) => handleProfileChange("gender", e.target.value)}
+                  >
+                    <option value="">Selecione</option>
+                    <option value="M">Masculino</option>
+                    <option value="F">Feminino</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-1 mb-4">
+                <label className="text-xs text-muted">Objetivo Principal</label>
+                <select 
+                  className={styles.miniInput} 
+                  value={editedProfile?.goals || ""} 
+                  onChange={(e) => handleProfileChange("goals", e.target.value)}
+                >
+                  <option value="">Selecione</option>
+                  <option value="Emagrecimento">Emagrecimento</option>
+                  <option value="Ganho de Massa Muscular">Ganho de Massa Muscular</option>
+                  <option value="Manutenção de Peso">Manutenção de Peso</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between p-2 bg-black/20 rounded-lg">
+                <span className="text-xs font-bold text-primary">Refeições Detectadas:</span>
+                <span className="text-xs font-bold">{result.meals.length}</span>
+              </div>
             </div>
 
             <p className="text-sm text-muted mb-6">

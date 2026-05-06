@@ -57,6 +57,8 @@ function ToastContainer({ toasts, remove }: { toasts: ToastItem[]; remove: (id: 
 import styles from "./dashboard.module.css";
 import ThemeToggle from "@/components/ThemeToggle";
 import ImportDietModal from "@/components/ImportDietModal";
+import ShoppingListModal from "@/components/ShoppingListModal";
+import { ShoppingCart } from "lucide-react";
 
 // ---------------------
 // Helpers
@@ -105,6 +107,7 @@ export default function DashboardPage() {
   const [notificationMealExpanded, setNotificationMealExpanded] = useState(false);
   const [toasts, setToasts] = useState<ToastItem[]>([]);
   const [showImportModal, setShowImportModal] = useState(false);
+  const [showShoppingList, setShowShoppingList] = useState(false);
 
   const addToast = (message: string, type: ToastType = "info") => {
     const id = ++_toastId;
@@ -384,6 +387,18 @@ export default function DashboardPage() {
               }}
             >
               <FileUp size={18} /> Importar Dieta
+            </button>
+            <button
+              onClick={() => setShowShoppingList(true)}
+              className="btn flex items-center gap-2"
+              style={{
+                background: "var(--card-bg)",
+                border: "1px solid var(--primary)",
+                color: "var(--primary)",
+                fontWeight: "bold",
+              }}
+            >
+              <ShoppingCart size={18} /> Lista de Compras
             </button>
             <button
               onClick={handleRefazer}
@@ -892,6 +907,18 @@ export default function DashboardPage() {
                   <td style={{ color: "var(--primary)", fontWeight: "bold" }}>{plan.target_calories} kcal</td>
                 </tr>
                 <tr>
+                  <td>Proteínas (Meta Diária)</td>
+                  <td style={{ fontWeight: "bold" }}>{plan.target_protein}g</td>
+                </tr>
+                <tr>
+                  <td>Carboidratos (Meta Diária)</td>
+                  <td style={{ fontWeight: "bold" }}>{plan.target_carbs}g</td>
+                </tr>
+                <tr>
+                  <td>Gorduras (Meta Diária)</td>
+                  <td style={{ fontWeight: "bold" }}>{plan.target_fats}g</td>
+                </tr>
+                <tr>
                   <td>Hidratação Mínima Recom.</td>
                   <td>{((plan.water_recommendation || 0) / 1000).toFixed(1)} Litros/dia</td>
                 </tr>
@@ -1032,6 +1059,12 @@ export default function DashboardPage() {
         <ImportDietModal 
           onClose={() => setShowImportModal(false)} 
           onImportSuccess={handleImportSuccess} 
+        />
+      )}
+      {showShoppingList && (
+        <ShoppingListModal 
+          onClose={() => setShowShoppingList(false)} 
+          meals={meals}
         />
       )}
     </div>

@@ -124,7 +124,7 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 @app.post("/profile")
 def create_profile(profile: HealthProfileCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).delete()
-    db_profile = HealthProfile(**profile.dict(), user_id=current_user.id)
+    db_profile = HealthProfile(**profile.model_dump(), user_id=current_user.id)
     db.add(db_profile)
     db.commit()
     return {"message": "Profile saved"}
@@ -137,7 +137,7 @@ def get_profile(current_user: User = Depends(get_current_user), db: Session = De
 @app.post("/preferences")
 def create_preferences(prefs: DietaryPreferencesCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     db.query(DietaryPreferences).filter(DietaryPreferences.user_id == current_user.id).delete()
-    db_prefs = DietaryPreferences(**prefs.dict(), user_id=current_user.id)
+    db_prefs = DietaryPreferences(**prefs.model_dump(), user_id=current_user.id)
     db.add(db_prefs)
     db.commit()
     return {"message": "Preferences saved"}
@@ -167,9 +167,13 @@ def generate_plan(current_user: User = Depends(get_current_user), db: Session = 
         weight=profile.weight,
         meals_per_day=profile.meals_per_day or 4,
         first_meal_time=profile.first_meal_time or "07:00",
-        meal_times=profile.meal_times
+        meal_times=profile.meal_times,
+        target_calories_override=profile.imported_calories,
+        target_protein_override=profile.imported_protein,
+        target_carbs_override=profile.imported_carbs,
+        target_fats_override=profile.imported_fats
     )
-    duration_weeks = profile.project_duration_months * 4
+    duration_weeks = (profile.project_duration_months or 12) * 4
     projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
 
     db_plan = NutritionalPlan(

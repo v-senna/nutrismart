@@ -184,6 +184,22 @@ a {
     display: none !important;
   }
   
+  body.printing-active * {
+    visibility: hidden;
+  }
+  
+  body.printing-active .printable-area,
+  body.printing-active .printable-area * {
+    visibility: visible;
+  }
+  
+  body.printing-active .printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+
   body {
     background: white;
     color: black;
@@ -193,9 +209,5 @@ a {
     border: 1px solid #ccc;
     box-shadow: none;
     background: transparent;
-  }
-  
-  * {
-    color: black !important;
   }
 }

@@ -70,9 +70,14 @@ def _distribute_macros(total_calories: float, goal: str, weight: float):
 
 def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
                                meals_per_day: int = 4, first_meal_time: str = "07:00",
-                               meal_times: list = None):
+                               meal_times: list = None, target_calories_override: float = None,
+                               target_protein_override: float = None,
+                               target_carbs_override: float = None,
+                               target_fats_override: float = None):
     # ---------- Cálculo de Calorias Alvo (Déficit/Superávit) ----------
-    if goal == "Emagrecimento":
+    if target_calories_override:
+        target_calories = round(target_calories_override)
+    elif goal == "Emagrecimento":
         # Déficit moderado de 20% (mais seguro que fixo de 500)
         target_calories = round(tdee * 0.8)
         # Garantir que não fique abaixo da TMB por segurança
@@ -82,7 +87,12 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
     else:
         target_calories = round(tdee)
 
-    total_protein, total_carbs, total_fats = _distribute_macros(target_calories, goal, weight)
+    calc_protein, calc_carbs, calc_fats = _distribute_macros(target_calories, goal, weight)
+    
+    total_protein = round(target_protein_override) if target_protein_override else calc_protein
+    total_carbs = round(target_carbs_override) if target_carbs_override else calc_carbs
+    total_fats = round(target_fats_override) if target_fats_override else calc_fats
+
 
     # ---------- Distribuição de refeições por horário ----------
     MEAL_TEMPLATES = [
@@ -229,6 +239,16 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
     meals = []
     for i, tmpl in enumerate(selected):
         share = tmpl["macro_share"] / total_share
+        
+        # Usar horário definido pelo usuário se existir
+        imported_meal = meal_times[i] if (meal_times and i < len(meal_times)) else None
+        # Nota: meal_times aqui pode vir do profile (lista de strings) ou ser None.
+        # No entanto, a lógica de importação passa os objetos de refeição inteiros se disponível.
+        
+        # Vamos checar se temos dados detalhados da importação
+        # Atualmente main.py passa profile.meal_times que é só uma lista de horários.
+        # Mas podemos melhorar isso.
+        
         cal   = round(target_calories * share)
         prot  = round(total_protein   * share)
         carbs = round(total_carbs     * share)

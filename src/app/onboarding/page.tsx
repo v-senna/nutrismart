@@ -30,7 +30,11 @@ export default function OnboardingPage() {
     meals_per_day: 4,
     project_duration_months: 3,
     first_meal_time: "08:00",
-    meal_times: ["08:00", "12:00", "16:00", "20:00"]
+    meal_times: ["08:00", "12:00", "16:00", "20:00"],
+    imported_calories: null as number | null,
+    imported_protein: null as number | null,
+    imported_carbs: null as number | null,
+    imported_fats: null as number | null
   });
 
   const [preferences, setPreferences] = useState({
@@ -110,11 +114,18 @@ export default function OnboardingPage() {
   };
 
   const handleImportSuccess = (data: any) => {
-    // Fill Profile
+    // Fill Profile - merge with existing if not present in import
     const newProfile = { ...profile };
+    
     if (data.profile.age) newProfile.age = data.profile.age;
+    else if (profile.age === 25) newProfile.age = "" as any;
+
     if (data.profile.weight) newProfile.weight = data.profile.weight;
+    else if (profile.weight === 70) newProfile.weight = "" as any;
+
     if (data.profile.height) newProfile.height = data.profile.height;
+    else if (profile.height === 175) newProfile.height = "" as any;
+
     if (data.profile.gender) newProfile.gender = data.profile.gender;
     if (data.profile.goals) newProfile.goals = data.profile.goals;
     
@@ -124,10 +135,41 @@ export default function OnboardingPage() {
       newProfile.meal_times = data.meals.map((m: any) => m.time || "08:00");
     }
     
-    setProfile(newProfile);
+    if (data.total_calories) {
+      newProfile.imported_calories = data.total_calories;
+    }
+    if (data.total_protein) newProfile.imported_protein = data.total_protein;
+    if (data.total_carbs) newProfile.imported_carbs = data.total_carbs;
+    if (data.total_fats) newProfile.imported_fats = data.total_fats;
     
-    // Step 2 is more relevant after import
-    setStep(2);
+    setProfile(newProfile);
+
+    // Merge Preferences
+    const newPrefs = { ...preferences };
+    if (data.restrictions && data.restrictions.length > 0) {
+        // Restrictions in state is a comma-separated string
+        let currentRest = newPrefs.restrictions 
+            ? newPrefs.restrictions.split(",").map(r => r.trim()).filter(Boolean) 
+            : [];
+        const combined = Array.from(new Set([...currentRest, ...data.restrictions]));
+        newPrefs.restrictions = combined.join(", ");
+    }
+    if (data.allergies && !newPrefs.allergies.includes(data.allergies)) {
+        newPrefs.allergies = newPrefs.allergies 
+            ? `${newPrefs.allergies}, ${data.allergies}`
+            : data.allergies;
+    }
+    setPreferences(newPrefs);
+
+    // Se faltarem dados essenciais do perfil, manter/voltar para o Step 1 para preenchimento.
+    // Caso contrário, pode avançar para o Step 2 (ou 3, mas vamos deixar no 2 para revisão das refeições).
+    const isProfileComplete = newProfile.age && newProfile.weight && newProfile.height && newProfile.gender && newProfile.goals;
+    
+    if (isProfileComplete) {
+        setStep(2);
+    } else {
+        setStep(1); // Força a ficar na tela inicial (Step 1) para preencher o que faltou
+    }
   };
 
   const submitData = async () => {
@@ -151,7 +193,11 @@ export default function OnboardingPage() {
           workout_duration: Number(profile.workout_duration),
           meals_per_day: Number(profile.meals_per_day),
           project_duration_months: Number(profile.project_duration_months),
-          first_meal_time: profile.meal_times[0] || profile.first_meal_time
+          first_meal_time: profile.meal_times[0] || profile.first_meal_time,
+          imported_calories: profile.imported_calories,
+          imported_protein: profile.imported_protein,
+          imported_carbs: profile.imported_carbs,
+          imported_fats: profile.imported_fats
         })
       });
 
@@ -352,7 +398,14 @@ export default function OnboardingPage() {
           </button>
           
           {step < 3 ? (
-            <button type="button" className="btn btn-primary flex items-center gap-2" onClick={nextStep}>
+            <button type="button" className="btn btn-primary flex items-center gap-2" onClick={() => {
+              if (step === 1 && (!profile.age || !profile.weight || !profile.height || !profile.gender || !profile.goals)) {
+                setError("Por favor, preencha todos os campos obrigatórios.");
+                return;
+              }
+              setError("");
+              nextStep();
+            }}>
               Próximo <ArrowRight size={18} />
             </button>
           ) : (

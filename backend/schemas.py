@@ -40,6 +40,10 @@ class HealthProfileCreate(BaseModel):
     project_duration_months: int = 12
     first_meal_time: str = "08:00"
     meal_times: Optional[List[str]] = None
+    imported_calories: Optional[float] = None
+    imported_protein: Optional[float] = None
+    imported_carbs: Optional[float] = None
+    imported_fats: Optional[float] = None
 
 class DietaryPreferencesCreate(BaseModel):
     restrictions: List[str]
