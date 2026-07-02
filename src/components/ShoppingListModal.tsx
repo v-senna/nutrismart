@@ -18,13 +18,50 @@ const REGIONAL_MULTIPLIERS: Record<string, { label: string, factor: number }> = 
   "norte": { label: "Norte (AM, PA, RR, etc)", factor: 1.2 },
 };
 
+const BRAZIL_STATES = [
+  { sigla: 'AC', nome: 'Acre' }, { sigla: 'AL', nome: 'Alagoas' }, { sigla: 'AP', nome: 'Amapá' },
+  { sigla: 'AM', nome: 'Amazonas' }, { sigla: 'BA', nome: 'Bahia' }, { sigla: 'CE', nome: 'Ceará' },
+  { sigla: 'DF', nome: 'Distrito Federal' }, { sigla: 'ES', nome: 'Espírito Santo' }, { sigla: 'GO', nome: 'Goiás' },
+  { sigla: 'MA', nome: 'Maranhão' }, { sigla: 'MT', nome: 'Mato Grosso' }, { sigla: 'MS', nome: 'Mato Grosso do Sul' },
+  { sigla: 'MG', nome: 'Minas Gerais' }, { sigla: 'PA', nome: 'Pará' }, { sigla: 'PB', nome: 'Paraíba' },
+  { sigla: 'PR', nome: 'Paraná' }, { sigla: 'PE', nome: 'Pernambuco' }, { sigla: 'PI', nome: 'Piauí' },
+  { sigla: 'RJ', nome: 'Rio de Janeiro' }, { sigla: 'RN', nome: 'Rio Grande do Norte' }, { sigla: 'RS', nome: 'Rio Grande do Sul' },
+  { sigla: 'RO', nome: 'Rondônia' }, { sigla: 'RR', nome: 'Roraima' }, { sigla: 'SC', nome: 'Santa Catarina' },
+  { sigla: 'SP', nome: 'São Paulo' }, { sigla: 'SE', nome: 'Sergipe' }, { sigla: 'TO', nome: 'Tocantins' }
+];
+
+import { fetchApi } from "@/lib/api";
+
 export default function ShoppingListModal({ onClose, meals }: ShoppingListModalProps) {
   const [region, setRegion] = useState("araras_copacabana");
+  const [selectedState, setSelectedState] = useState("");
+  const [selectedCity, setSelectedCity] = useState("");
+  const [cities, setCities] = useState<{nome: string}[]>([]);
+  const [supermarkets, setSupermarkets] = useState<{name: string, url: string}[]>([]);
+  const [selectedSupermarket, setSelectedSupermarket] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [isQuoting, setIsQuoting] = useState(false);
   const [animate, setAnimate] = useState(false);
   
   useEffect(() => {
     setAnimate(true);
   }, []);
+
+  useEffect(() => {
+    if (selectedState) {
+      fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${selectedState}/municipios`)
+        .then(res => res.json())
+        .then(data => {
+          setCities(data.sort((a: any, b: any) => a.nome.localeCompare(b.nome)));
+          setSelectedCity("");
+          setSupermarkets([]);
+          setSelectedSupermarket("");
+        })
+        .catch(err => console.error("Erro ao buscar cidades:", err));
+    } else {
+      setCities([]);
+    }
+  }, [selectedState]);
 
   // Extrair itens das sugestões de refeições de forma mais robusta
   const initialItems = useMemo(() => {
@@ -198,6 +235,54 @@ export default function ShoppingListModal({ onClose, meals }: ShoppingListModalP
     }, 500);
   };
 
+  const handleSearchSupermarkets = async () => {
+    if (!selectedState || !selectedCity) return;
+    setIsSearching(true);
+    const searchRegion = `${selectedCity}, ${selectedState}`;
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetchApi("/search-supermarkets", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ region: searchRegion })
+      });
+      setSupermarkets(res || []);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const handleQuoteList = async () => {
+    if (!selectedSupermarket) return;
+    setIsQuoting(true);
+    try {
+      const token = localStorage.getItem("token");
+      const itemNames = items.map(i => i.name);
+      const searchRegion = `${selectedCity}, ${selectedState}`;
+      const res = await fetchApi("/quote-shopping-list", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ items: itemNames, supermarket: selectedSupermarket, region: searchRegion })
+      });
+      if (res && Array.isArray(res)) {
+        const newItems = [...items];
+        res.forEach(quoted => {
+          const idx = newItems.findIndex(i => i.name === quoted.item);
+          if (idx !== -1) {
+            newItems[idx].basePrice = quoted.price;
+          }
+        });
+        setItems(newItems);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsQuoting(false);
+    }
+  };
+
   return (
     <div className={`${styles.overlay} ${animate ? styles.active : ""} printable-area`}>
       <div className={`glass-card ${styles.modal} print-modal`}>
@@ -214,18 +299,72 @@ export default function ShoppingListModal({ onClose, meals }: ShoppingListModalP
         </div>
 
         <div className={styles.configBar}>
-          <div className={styles.configItem}>
-            <label><MapPin size={14} /> Região</label>
-            <select 
-              className={styles.select}
-              value={region}
-              onChange={(e) => setRegion(e.target.value)}
-            >
-              {Object.entries(REGIONAL_MULTIPLIERS).map(([key, val]) => (
-                <option key={key} value={key}>{val.label}</option>
-              ))}
-            </select>
+          <div className={styles.configItem} style={{ flex: 1 }}>
+            <label><MapPin size={14} /> Selecione sua Região para Buscar Supermercados</label>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <select 
+                className={styles.select}
+                value={selectedState}
+                onChange={(e) => setSelectedState(e.target.value)}
+                style={{ flex: 1, minWidth: '100px' }}
+              >
+                <option value="">Estado</option>
+                {BRAZIL_STATES.map((st) => (
+                  <option key={st.sigla} value={st.sigla}>{st.sigla}</option>
+                ))}
+              </select>
+
+              <select 
+                className={styles.select}
+                value={selectedCity}
+                onChange={(e) => setSelectedCity(e.target.value)}
+                disabled={!selectedState}
+                style={{ flex: 2, minWidth: '150px' }}
+              >
+                <option value="">Cidade</option>
+                {cities.map((city) => (
+                  <option key={city.nome} value={city.nome}>{city.nome}</option>
+                ))}
+              </select>
+
+              <button 
+                onClick={handleSearchSupermarkets} 
+                className="btn btn-primary" 
+                style={{ padding: '0.5rem 1rem', fontSize: '0.8rem' }}
+                disabled={isSearching || !selectedCity}
+              >
+                {isSearching ? "Buscando..." : "Buscar Mercados"}
+              </button>
+            </div>
+            
+            {supermarkets.length > 0 && (
+              <div style={{ marginTop: '0.5rem' }}>
+                <label className="text-xs text-muted">Selecione o Supermercado Base:</label>
+                <select 
+                  className={styles.select}
+                  value={selectedSupermarket}
+                  onChange={(e) => setSelectedSupermarket(e.target.value)}
+                  style={{ marginTop: '0.25rem' }}
+                >
+                  <option value="">Escolha um mercado...</option>
+                  {supermarkets.map((sm, i) => (
+                    <option key={i} value={sm.name}>{sm.name}</option>
+                  ))}
+                </select>
+                {selectedSupermarket && (
+                  <button 
+                    onClick={handleQuoteList}
+                    className="btn"
+                    style={{ background: 'var(--primary)', color: 'black', marginTop: '0.5rem', width: '100%', fontSize: '0.85rem' }}
+                    disabled={isQuoting}
+                  >
+                    {isQuoting ? "Cotando..." : "Cotar Preços Reais via IA"}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
+
           <div className={styles.summaryBadge}>
             <span className="text-[10px] uppercase tracking-wider opacity-60">Total Estimado (Semana)</span>
             <span className="text-lg font-bold text-primary">R$ {total.toFixed(2)}</span>
