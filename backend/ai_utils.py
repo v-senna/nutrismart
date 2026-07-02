@@ -1,17 +1,14 @@
 import re
 import io
-import pandas as pd
-import google.generativeai as genai
 import os
 import json
+import requests
 from dotenv import load_dotenv
-from pypdf import PdfReader
 
 # Carregar variáveis de ambiente do .env
 load_dotenv()
 
 # Configurar Gemini (O usuário deve fornecer a chave no ambiente)
-# IMPORTANTE: Movido para ANTES das funções que dependem de GEMINI_API_KEY
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
 
 # Validação: tratar chaves placeholder como None
@@ -21,8 +18,15 @@ if GEMINI_API_KEY:
         print(f"⚠️ GEMINI_API_KEY parece ser um placeholder ('{GEMINI_API_KEY[:15]}...'). IA desabilitada.")
         GEMINI_API_KEY = None
 
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
+
+def _call_gemini(prompt: str) -> str:
+    """Chama a API REST do Gemini diretamente (sem SDK pesado)."""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+    payload = {"contents": [{"parts": [{"text": prompt}]}]}
+    resp = requests.post(url, json=payload, timeout=30)
+    resp.raise_for_status()
+    data = resp.json()
+    return data["candidates"][0]["content"]["parts"][0]["text"]
 
 # --- Dados de fallback para supermercados por região ---
 SUPERMARKETS_BY_REGION = {
@@ -147,6 +151,7 @@ def _find_best_price(item_name: str) -> float:
 
 def extract_text_from_pdf(file_content):
     try:
+        from pypdf import PdfReader  # lazy import — evita bundle pesado
         reader = PdfReader(io.BytesIO(file_content))
         text = ""
         for page in reader.pages:
@@ -168,7 +173,6 @@ def search_supermarkets_ai(region: str):
         return DEFAULT_SUPERMARKETS
         
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
         prompt = f"""
         O usuário quer saber os principais supermercados online ou físicos na região de "{region}" no Brasil.
         Por favor, forneça uma lista com até 5 supermercados reais que atendem essa região, incluindo o nome e a provável URL do site deles.
@@ -177,8 +181,7 @@ def search_supermarkets_ai(region: str):
           {{"name": "Nome do Supermercado", "url": "https://url-do-mercado.com.br"}}
         ]
         """
-        response = model.generate_content(prompt)
-        text = response.text.strip()
+        text = _call_gemini(prompt).strip()
         if text.startswith("```json"):
             text = text[7:-3]
         elif text.startswith("```"):
@@ -199,7 +202,6 @@ def quote_shopping_list_ai(items: list, supermarket: str, region: str):
         return [{"item": item, "price": _find_best_price(item)} for item in items]
         
     try:
-        model = genai.GenerativeModel('gemini-1.5-flash')
         items_str = "\n".join([f"- {i}" for i in items])
         prompt = f"""
         Atue como um Agente de Cotação de Supermercado.
@@ -216,8 +218,7 @@ def quote_shopping_list_ai(items: list, supermarket: str, region: str):
           {{"item": "Nome do item", "price": 12.50}}
         ]
         """
-        response = model.generate_content(prompt)
-        text = response.text.strip()
+        text = _call_gemini(prompt).strip()
         if text.startswith("```json"):
             text = text[7:-3]
         elif text.startswith("```"):
@@ -230,6 +231,7 @@ def quote_shopping_list_ai(items: list, supermarket: str, region: str):
 
 def extract_text_from_excel(file_content):
     try:
+        import pandas as pd  # lazy import — evita bundle pesado
         df = pd.read_excel(io.BytesIO(file_content))
         return df.to_string()
     except Exception as e:
@@ -252,8 +254,6 @@ def parse_diet_info(text, user_profile=None):
         return parse_diet_info_regex(text)
 
 def parse_diet_info_ai(text, user_profile=None):
-    # Usar o flash para ser rápido e econômico
-    model = genai.GenerativeModel('gemini-1.5-flash')
     
     profile_context = ""
     if user_profile:
@@ -300,8 +300,7 @@ def parse_diet_info_ai(text, user_profile=None):
     {text}
     """
     
-    response = model.generate_content(prompt)
-    response_text = response.text.strip()
+    response_text = _call_gemini(prompt).strip()
     
     # Limpar possíveis blocos de código markdown
     if "```json" in response_text:
