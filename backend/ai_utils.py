@@ -231,9 +231,14 @@ def quote_shopping_list_ai(items: list, supermarket: str, region: str):
 
 def extract_text_from_excel(file_content):
     try:
-        import pandas as pd  # lazy import — evita bundle pesado
+        import pandas as pd  # lazy import — só disponível localmente
+        import openpyxl  # noqa: F401 — necessário para pandas ler .xlsx
         df = pd.read_excel(io.BytesIO(file_content))
         return df.to_string()
+    except ImportError:
+        # pandas/openpyxl não disponíveis no ambiente serverless (Vercel)
+        # Retorna mensagem que informa ao usuário para usar PDF ou texto
+        return "ERRO: Upload de planilhas Excel não suportado nesta plataforma. Por favor, converta seu arquivo para PDF ou cole o texto da dieta diretamente."
     except Exception as e:
         print(f"Excel extraction error: {e}")
         return ""
