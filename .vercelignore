@@ -1,0 +1,20 @@
+# Ambientes virtuais Python — NÃO incluir no bundle da Vercel
+backend/venv/
+backend/venv_old/
+backend/__pycache__/
+**/venv/
+**/__pycache__/
+*.pyc
+
+# Banco de dados local (efêmero na Vercel, usar variável DATABASE_URL)
+*.db
+*.sqlite3
+
+# Build do Next.js (gerenciado pela Vercel)
+.next/
+node_modules/
+
+# Arquivos de desenvolvimento
+.env
+.env.local
+scratch/
