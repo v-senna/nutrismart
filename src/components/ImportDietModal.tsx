@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { fetchApi } from "@/lib/api";
 import { Upload, X, FileText, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
 import styles from "./ImportDietModal.module.css";
@@ -16,6 +16,25 @@ export default function ImportDietModal({ onClose, onImportSuccess }: ImportDiet
   const [error, setError] = useState("");
   const [result, setResult] = useState<any>(null);
   const [editedProfile, setEditedProfile] = useState<any>(null);
+  const [currentProfile, setCurrentProfile] = useState<any>(null);
+
+  // Carregar perfil atual para preencher lacunas da importação
+  useEffect(() => {
+    const loadProfile = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return;
+      try {
+        const response = await fetch("/api/profile", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setCurrentProfile(data);
+        }
+      } catch (err) {}
+    };
+    loadProfile();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -44,13 +63,34 @@ export default function ImportDietModal({ onClose, onImportSuccess }: ImportDiet
       });
 
       if (!response.ok) {
-        const err = await response.json();
-        throw new Error(err.detail || "Erro ao importar arquivo");
+        let errorMessage = "Erro ao importar arquivo";
+        try {
+          const err = await response.json();
+          errorMessage = err.detail || errorMessage;
+        } catch (e) {
+          // If not JSON, try to get text
+          const text = await response.text();
+          errorMessage = text || `Erro do servidor (${response.status})`;
+        }
+        throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (e) {
+        throw new Error("O servidor retornou uma resposta inválida (não JSON).");
+      }
       setResult(data);
-      setEditedProfile({ ...data.profile });
+      
+      // Mesclar: prioridade para o que foi importado, fallback para o perfil atual
+      setEditedProfile({
+        age: data.profile?.age || currentProfile?.age || "",
+        weight: data.profile?.weight || currentProfile?.weight || "",
+        height: data.profile?.height || currentProfile?.height || "",
+        gender: data.profile?.gender || currentProfile?.gender || "",
+        goals: data.profile?.goals || currentProfile?.goals || "",
+      });
     } catch (err: any) {
       setError(err.message);
     } finally {

@@ -1,57 +1,57 @@
-/* ===== MODO ESCURO (padrão) ===== */
+/* ===== MODO ESCURO (Vintage Forest) ===== */
 :root, [data-theme="dark"] {
-  --background: #050a15; 
-  --foreground: #ffffff;
+  --background: #1e2420; 
+  --foreground: #eae6d9;
   
-  --primary: #00ff73;
-  --primary-hover: #00cc5c; 
-  --secondary: #00f0ff;
+  --primary: #8cb369;
+  --primary-hover: #7a9f58; 
+  --secondary: #d4a373;
   
-  --card-bg: rgba(13, 20, 36, 0.85);
-  --card-border: rgba(0, 255, 115, 0.25);
+  --card-bg: rgba(39, 47, 41, 0.85);
+  --card-border: rgba(140, 179, 105, 0.25);
   
-  --input-bg: #0d1424;
-  --input-border: rgba(0, 255, 115, 0.3);
+  --input-bg: #1a1f1b;
+  --input-border: rgba(140, 179, 105, 0.3);
   
-  --error: #ff3366;
-  --success: #00ff73; 
-  --warning: #ffcc00;
+  --error: #cc5a5a;
+  --success: #8cb369; 
+  --warning: #e0ac48;
   
-  --muted: #94a3b8;         /* Texto secundário no escuro */
-  --chart-axis: #64748b;    /* Eixos do gráfico */
-  --tooltip-bg: #0d1424;    /* Fundo do tooltip */
-  --meal-bg: rgba(255, 255, 255, 0.04); /* Card de refeição */
+  --muted: #9aa69b;
+  --chart-axis: #78857a;
+  --tooltip-bg: #272f29;
+  --meal-bg: rgba(234, 230, 217, 0.03);
   
-  --primary-foreground: #050a15; /* Preto no Neon Green */
+  --primary-foreground: #1e2420;
   
   --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 }
 
 /* ===== MODO CLARO (Vintage Parchment) ===== */
 [data-theme="light"] {
-  --background: #f4f1ea;    /* Tom de pergaminho claro */
-  --foreground: #2d2a26;    /* Marrom carvão para texto */
+  --background: #fdfbf7;
+  --foreground: #2c362b;
   
-  --primary: #5a6648;       /* Verde musgo vintage */
-  --primary-hover: #4a543b; 
-  --secondary: #c76d54;     /* Terracota vintage */
+  --primary: #4e6e44;
+  --primary-hover: #3c5634; 
+  --secondary: #d4a373;
   
-  --card-bg: #fdfbf7;
-  --card-border: #dcd7ca;
+  --card-bg: #ffffff;
+  --card-border: #e0ded8;
   
-  --input-bg: #ffffff;
-  --input-border: #c8c2b5;
+  --input-bg: #f5f4ef;
+  --input-border: #c9c7c1;
   
-  --error: #af3a3a;
-  --success: #5a6648;
-  --warning: #b38600;
+  --error: #b54545;
+  --success: #4e6e44;
+  --warning: #c28c2e;
 
-  --primary-foreground: #f4f1ea; 
+  --primary-foreground: #ffffff; 
 
-  --muted: #8a817c;         /* Cinza sépia */
-  --chart-axis: #a8a096;    
-  --tooltip-bg: #fdfbf7;
-  --meal-bg: #ece9df;       /* Bege suave para cards de refeição */
+  --muted: #808a7e;
+  --chart-axis: #a1ada0;    
+  --tooltip-bg: #ffffff;
+  --meal-bg: #f6f5ef;
 }
 
 
@@ -129,10 +129,16 @@ a {
   transition: all 0.2s ease;
 }
 
+select.input-field option,
+select option {
+  background-color: var(--card-bg);
+  color: var(--foreground);
+}
+
 .input-field:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 0 2px rgba(140, 179, 105, 0.2);
 }
 
 /* Button Styles */

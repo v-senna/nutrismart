@@ -58,6 +58,7 @@ import styles from "./dashboard.module.css";
 import ThemeToggle from "@/components/ThemeToggle";
 import ImportDietModal from "@/components/ImportDietModal";
 import ShoppingListModal from "@/components/ShoppingListModal";
+import MealTracker from "@/components/MealTracker";
 import { ShoppingCart } from "lucide-react";
 
 // ---------------------
@@ -220,7 +221,7 @@ export default function DashboardPage() {
     localStorage.removeItem("token");
     router.push("/login");
   };
-  const handleRefazer = () => router.push("/onboarding");
+  const handleRefazer = () => router.push("/onboarding?edit=true");
 
   const handleImportSuccess = (data: any) => {
     // Para simplificar, quando importar pelo dashboard, levamos o usuário
@@ -754,6 +755,7 @@ export default function DashboardPage() {
             <h2 style={{ fontSize: "1.25rem", marginBottom: "1.5rem", color: "var(--primary)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
               <Utensils size={20} /> Planejamento de Refeições
             </h2>
+            <MealTracker meals={meals} onUpdate={fetchData} />
             <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
               {meals.map((meal: any, idx: number) => {
                 const mealLabel = meal.label.toUpperCase();

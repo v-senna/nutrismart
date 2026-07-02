@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 import { ClipboardList, Ruler, Target, Salad, ArrowLeft, ArrowRight, Rocket, CheckCircle } from "lucide-react";
 import styles from "./onboarding.module.css";
@@ -9,8 +10,12 @@ import ThemeToggle from "@/components/ThemeToggle";
 import ImportDietModal from "@/components/ImportDietModal";
 import { FileUp } from "lucide-react";
 
-export default function OnboardingPage() {
+import { Suspense } from "react";
+
+function OnboardingContent() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const isEditing = searchParams.get("edit") === "true";
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -34,7 +39,10 @@ export default function OnboardingPage() {
     imported_calories: null as number | null,
     imported_protein: null as number | null,
     imported_carbs: null as number | null,
-    imported_fats: null as number | null
+    imported_fats: null as number | null,
+    imported_meals: null as any,
+    imported_tips: null as any,
+    is_custom_diet: false
   });
 
   const [preferences, setPreferences] = useState({
@@ -53,7 +61,14 @@ export default function OnboardingPage() {
       
       try {
         const existingProfile = await fetchApi("/profile", { headers });
-        if (Object.keys(existingProfile).length > 0) {
+        
+        // Se já tem perfil completo e NÃO estamos em modo de edição, vai pro dashboard
+        if (!isEditing && existingProfile && existingProfile.age && existingProfile.weight) {
+          router.push("/dashboard");
+          return;
+        }
+
+        if (existingProfile && Object.keys(existingProfile).length > 0) {
           setProfile(prev => ({ 
             ...prev, 
             ...existingProfile,
@@ -62,7 +77,7 @@ export default function OnboardingPage() {
         }
 
         const existingPrefs = await fetchApi("/preferences", { headers });
-        if (Object.keys(existingPrefs).length > 0) {
+        if (existingPrefs && Object.keys(existingPrefs).length > 0) {
           setPreferences({
             restrictions: existingPrefs.restrictions?.join(", ") || "",
             allergies: existingPrefs.allergies?.join(", ") || "",
@@ -74,7 +89,7 @@ export default function OnboardingPage() {
       } catch (err) {}
     };
     loadExistingData();
-  }, []);
+  }, [router, isEditing]);
 
   const nextStep = () => setStep((s) => Math.min(s + 1, 3));
   const prevStep = () => setStep((s) => Math.max(s - 1, 1));
@@ -83,7 +98,7 @@ export default function OnboardingPage() {
     const { name, value } = e.target;
     
     if (name === "meals_per_day") {
-      const count = Math.min(6, Math.max(1, Number(value)));
+      const count = Math.min(10, Math.max(1, Number(value))); // Aumentado para 10
       const newTimes = [...profile.meal_times];
       if (count > newTimes.length) {
         for (let i = newTimes.length; i < count; i++) {
@@ -133,6 +148,7 @@ export default function OnboardingPage() {
     if (data.meals && data.meals.length > 0) {
       newProfile.meals_per_day = data.meals.length;
       newProfile.meal_times = data.meals.map((m: any) => m.time || "08:00");
+      newProfile.imported_meals = JSON.stringify(data.meals);
     }
     
     if (data.total_calories) {
@@ -141,6 +157,12 @@ export default function OnboardingPage() {
     if (data.total_protein) newProfile.imported_protein = data.total_protein;
     if (data.total_carbs) newProfile.imported_carbs = data.total_carbs;
     if (data.total_fats) newProfile.imported_fats = data.total_fats;
+    
+    if (data.recommendations && data.recommendations.length > 0) {
+      newProfile.imported_tips = JSON.stringify(data.recommendations);
+    }
+    
+    newProfile.is_custom_diet = true;
     
     setProfile(newProfile);
 
@@ -162,13 +184,12 @@ export default function OnboardingPage() {
     setPreferences(newPrefs);
 
     // Se faltarem dados essenciais do perfil, manter/voltar para o Step 1 para preenchimento.
-    // Caso contrário, pode avançar para o Step 2 (ou 3, mas vamos deixar no 2 para revisão das refeições).
     const isProfileComplete = newProfile.age && newProfile.weight && newProfile.height && newProfile.gender && newProfile.goals;
     
     if (isProfileComplete) {
         setStep(2);
     } else {
-        setStep(1); // Força a ficar na tela inicial (Step 1) para preencher o que faltou
+        setStep(1); 
     }
   };
 
@@ -197,7 +218,10 @@ export default function OnboardingPage() {
           imported_calories: profile.imported_calories,
           imported_protein: profile.imported_protein,
           imported_carbs: profile.imported_carbs,
-          imported_fats: profile.imported_fats
+          imported_fats: profile.imported_fats,
+          imported_meals: profile.imported_meals,
+          imported_tips: profile.imported_tips,
+          is_custom_diet: profile.is_custom_diet
         })
       });
 
@@ -330,8 +354,8 @@ export default function OnboardingPage() {
                 <input type="number" className="input-field" name="workout_days" value={profile.workout_days} onChange={handleProfileChange} />
               </div>
               <div className="input-group">
-                <label className="input-label">Refeições por dia (1-6)</label>
-                <input type="number" className="input-field" name="meals_per_day" min="1" max="6" value={profile.meals_per_day} onChange={handleProfileChange} />
+                <label className="input-label">Refeições por dia (1-10)</label>
+                <input type="number" className="input-field" name="meals_per_day" min="1" max="10" value={profile.meals_per_day} onChange={handleProfileChange} />
               </div>
             </div>
 
@@ -423,5 +447,13 @@ export default function OnboardingPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function OnboardingPage() {
+  return (
+    <Suspense fallback={<div className={styles.container}>Carregando...</div>}>
+      <OnboardingContent />
+    </Suspense>
   );
 }

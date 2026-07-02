@@ -5,21 +5,32 @@ from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from typing import List
 import json
-import os
 import re
+from dotenv import load_dotenv
+
+# Carregar variáveis de ambiente
+load_dotenv()
 
 from database import engine, get_db, Base
-from models import User, HealthProfile, NutritionalPlan, WeightLog, DietaryPreferences
-from schemas import UserCreate, UserLogin, HealthProfileCreate, WeightLogCreate, WeightLogResponse, DietaryPreferencesCreate
+from models import User, HealthProfile, NutritionalPlan, WeightLog, DietaryPreferences, MealLog
+from schemas import (
+    UserCreate, UserResponse, UserLogin,
+    HealthProfileCreate, HealthProfileResponse,
+    DietaryPreferencesCreate,
+    WeightLogCreate, WeightLogResponse,
+    MealLogCreate, MealLogResponse,
+    SearchSupermarketsRequest, QuoteShoppingListRequest
+)
 from engine import (
     calculate_tmb,
     calculate_tdee,
     get_bmi_classification,
     generate_nutritional_plan,
     generate_weight_projection,
-    calculate_water_recommendation
+    calculate_water_recommendation,
+    recalculate_remaining_meals_for_today
 )
-from ai_utils import extract_text_from_pdf, extract_text_from_excel, parse_diet_info
+from ai_utils import extract_text_from_pdf, extract_text_from_excel, parse_diet_info, search_supermarkets_ai, quote_shopping_list_ai
 from fastapi import UploadFile, File
 
 # Criar tabelas se não existirem
@@ -35,6 +46,20 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# --- DEBUG: Capturador Global de Erros ---
+import traceback
+from fastapi import Request
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    error_msg = f"Erro Crítico: {str(exc)}\n{traceback.format_exc()}"
+    print(error_msg)
+    return JSONResponse(
+        status_code=500,
+        content={"detail": error_msg}
+    )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
@@ -123,11 +148,18 @@ def read_users_me(current_user: User = Depends(get_current_user)):
 
 @app.post("/profile")
 def create_profile(profile: HealthProfileCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).delete()
-    db_profile = HealthProfile(**profile.model_dump(), user_id=current_user.id)
-    db.add(db_profile)
-    db.commit()
-    return {"message": "Profile saved"}
+    import traceback
+    try:
+        db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).delete()
+        db_profile = HealthProfile(**profile.model_dump(), user_id=current_user.id)
+        db.add(db_profile)
+        db.commit()
+        return {"message": "Profile updated successfully"}
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Erro no Profile: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.get("/profile")
 def get_profile(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
@@ -149,68 +181,107 @@ def get_preferences(current_user: User = Depends(get_current_user), db: Session 
 
 @app.post("/generate-plan")
 def generate_plan(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
-    profile = db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).first()
-    if not profile:
-        raise HTTPException(status_code=400, detail="Health profile missing")
+    import traceback
+    try:
+        profile = db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).first()
+        if not profile:
+            raise HTTPException(status_code=400, detail="Health profile missing")
 
-    db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).delete()
+        db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).delete()
 
-    tmb = calculate_tmb(profile.gender, profile.weight, profile.height, profile.age)
-    tdee = calculate_tdee(tmb, profile.activity_level)
-    bmi = round(profile.weight / ((profile.height / 100) ** 2), 1)
-    bmi_class = get_bmi_classification(bmi, profile.age)
-    water = calculate_water_recommendation(profile.weight)
+        tmb = calculate_tmb(profile.gender, profile.weight or 70, profile.height or 170, profile.age or 25)
+        tdee = calculate_tdee(tmb, profile.activity_level)
+        
+        # Prevenção de divisão por zero ou valores nulos
+        weight_val = profile.weight or 70.0
+        height_val = profile.height or 170.0
+        if height_val <= 0: height_val = 170.0
+        
+        bmi = round(weight_val / ((height_val / 100) ** 2), 1)
+        bmi_class = get_bmi_classification(bmi, profile.age or 30)
+        water = calculate_water_recommendation(weight_val)
 
-    plan_data = generate_nutritional_plan(
-        profile.goals,
-        tdee,
-        weight=profile.weight,
-        meals_per_day=profile.meals_per_day or 4,
-        first_meal_time=profile.first_meal_time or "07:00",
-        meal_times=profile.meal_times,
-        target_calories_override=profile.imported_calories,
-        target_protein_override=profile.imported_protein,
-        target_carbs_override=profile.imported_carbs,
-        target_fats_override=profile.imported_fats
-    )
-    duration_weeks = (profile.project_duration_months or 12) * 4
-    projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
+        plan_data = generate_nutritional_plan(
+            profile.goals,
+            tdee,
+            weight=profile.weight,
+            meals_per_day=profile.meals_per_day or 4,
+            first_meal_time=profile.first_meal_time or "07:00",
+            meal_times=profile.meal_times,
+            target_calories_override=profile.imported_calories,
+            target_protein_override=profile.imported_protein,
+            target_carbs_override=profile.imported_carbs,
+            target_fats_override=profile.imported_fats,
+            imported_meals_data=profile.imported_meals,
+            imported_tips=profile.imported_tips,
+            is_custom_diet=profile.is_custom_diet
+        )
+        duration_weeks = (profile.project_duration_months or 12) * 4
+        projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
 
-    db_plan = NutritionalPlan(
-        user_id=current_user.id,
-        tmb=tmb,
-        tdee=tdee,
-        imc=bmi,
-        imc_classification=bmi_class,
-        water_recommendation=water,
-        target_calories=plan_data["calories_target"],
-        target_protein=plan_data["protein_target"],
-        target_carbs=plan_data["carbs_target"],
-        target_fats=plan_data["fats_target"],
-        meals_json=json.dumps(plan_data["meals"]),
-        recommendations_text=plan_data["recommendations"],
-        projection_data=json.dumps(projection)
-    )
-    db.add(db_plan)
-    db.commit()
-    return {"message": "Plan generated successfully"}
+        db_plan = NutritionalPlan(
+            user_id=current_user.id,
+            tmb=tmb,
+            tdee=tdee,
+            imc=bmi,
+            imc_classification=bmi_class,
+            water_recommendation=water,
+            target_calories=plan_data["calories_target"],
+            target_protein=plan_data["protein_target"],
+            target_carbs=plan_data["carbs_target"],
+            target_fats=plan_data["fats_target"],
+            meals_json=json.dumps(plan_data["meals"]),
+            recommendations_text=plan_data["recommendations"],
+            projection_data=json.dumps(projection)
+        )
+        db.add(db_plan)
+        db.commit()
+        return {"message": "Plan generated successfully"}
+    except Exception as e:
+        db.rollback()
+        error_msg = f"Erro no Generate Plan: {str(e)}\n{traceback.format_exc()}"
+        print(error_msg)
+        raise HTTPException(status_code=500, detail=error_msg)
 
 @app.post("/import-diet")
-async def import_diet(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+async def import_diet(file: UploadFile = File(...), current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    print(f"--- Iniciando import-diet: Arquivo={file.filename}, Usuário={current_user.email} ---")
     content = await file.read()
+    print(f"--- Arquivo lido: {len(content)} bytes ---")
     filename = file.filename.lower()
     
     try:
         if filename.endswith(".pdf"):
+            print("--- Extraindo texto de PDF ---")
             text = extract_text_from_pdf(content)
         elif filename.endswith((".xlsx", ".xls")):
+            print("--- Extraindo texto de Excel ---")
             text = extract_text_from_excel(content)
         else:
+            print(f"--- Formato não suportado: {filename} ---")
             raise HTTPException(status_code=400, detail="Formato de arquivo não suportado. Use PDF ou Excel.")
         
-        extracted_data = parse_diet_info(text)
+        if not text or len(text.strip()) == 0:
+            print("--- Texto extraído está vazio ---")
+            raise HTTPException(status_code=400, detail="Não foi possível extrair texto do arquivo. Verifique se o arquivo não está protegido ou corrompido.")
+
+        print(f"--- Texto extraído ({len(text)} caracteres). Analisando... ---")
+        print(f"DEBUG - Texto bruto extraído:\n{text[:1000]}...") # Logar primeiros 1000 chars
+        
+        # Buscar perfil do usuário para ajudar a IA a preencher quantidades vazias
+        user_profile = db.query(HealthProfile).filter(HealthProfile.user_id == current_user.id).first()
+        profile_dict = user_profile.__dict__ if user_profile else None
+        
+        extracted_data = parse_diet_info(text, user_profile=profile_dict)
+        print(f"DEBUG - Dados estruturados pela IA: {json.dumps(extracted_data, indent=2, ensure_ascii=False)}")
+        print("--- Análise concluída com sucesso ---")
         return extracted_data
+    except HTTPException as he:
+        raise he
     except Exception as e:
+        print(f"--- ERRO CRÍTICO EM IMPORT-DIET: {str(e)} ---")
+        import traceback
+        print(traceback.format_exc())
         raise HTTPException(status_code=500, detail=f"Erro ao processar arquivo: {str(e)}")
 
 @app.get("/my-plan")
@@ -242,11 +313,17 @@ def log_weight(log: WeightLogCreate, current_user: User = Depends(get_current_us
         # 3. Recalcular a projeção com base no novo peso real
         plan = db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).first()
         if plan:
-            tmb = calculate_tmb(profile.gender, profile.weight, profile.height, profile.age)
+            tmb = calculate_tmb(profile.gender, profile.weight or 70, profile.height or 170, profile.age or 25)
             tdee = calculate_tdee(tmb, profile.activity_level)
-            bmi = round(profile.weight / ((profile.height / 100) ** 2), 1)
-            bmi_class = get_bmi_classification(bmi, profile.age)
-            water = calculate_water_recommendation(profile.weight)
+            
+            # Prevenção de divisão por zero ou valores nulos
+            weight_val = profile.weight or 70.0
+            height_val = profile.height or 170.0
+            if height_val <= 0: height_val = 170.0
+            
+            bmi = round(weight_val / ((height_val / 100) ** 2), 1)
+            bmi_class = get_bmi_classification(bmi, profile.age or 30)
+            water = calculate_water_recommendation(weight_val)
 
             duration_weeks = (profile.project_duration_months or 12) * 4
             new_projection = generate_weight_projection(profile.weight, profile.goals, duration_weeks)
@@ -258,7 +335,14 @@ def log_weight(log: WeightLogCreate, current_user: User = Depends(get_current_us
                 weight=profile.weight,
                 meals_per_day=profile.meals_per_day or 4,
                 first_meal_time=profile.first_meal_time or "07:00",
-                meal_times=profile.meal_times
+                meal_times=profile.meal_times,
+                target_calories_override=profile.imported_calories,
+                target_protein_override=profile.imported_protein,
+                target_carbs_override=profile.imported_carbs,
+                target_fats_override=profile.imported_fats,
+                imported_meals_data=profile.imported_meals,
+                imported_tips=profile.imported_tips,
+                is_custom_diet=profile.is_custom_diet
             )
 
             plan.tmb = tmb
@@ -312,3 +396,48 @@ def get_weight_logs(current_user: User = Depends(get_current_user), db: Session 
         }
         for l in logs
     ]
+
+# --- Endpoints de Refeições ---
+
+@app.post("/meal-log", response_model=MealLogResponse)
+def log_meal(log: MealLogCreate, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    # 1. Salvar o log
+    new_log = MealLog(
+        user_id=current_user.id,
+        meal_name=log.meal_name,
+        scheduled_time=log.scheduled_time,
+        status=log.status,
+        evaluation=log.evaluation,
+        logged_at=datetime.utcnow()
+    )
+    db.add(new_log)
+    db.flush()
+
+    # 2. Se pulou, recalcular refeições restantes do dia
+    if log.status == "skipped":
+        plan = db.query(NutritionalPlan).filter(NutritionalPlan.user_id == current_user.id).first()
+        if plan and plan.meals_json:
+            meals_list = json.loads(plan.meals_json)
+            updated_meals = recalculate_remaining_meals_for_today(meals_list, log.meal_name)
+            plan.meals_json = json.dumps(updated_meals)
+            
+    db.commit()
+    db.refresh(new_log)
+    
+    return new_log
+
+@app.get("/meal-logs", response_model=List[MealLogResponse])
+def get_meal_logs(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    logs = db.query(MealLog).filter(MealLog.user_id == current_user.id).order_by(MealLog.logged_at.desc()).all()
+    return logs
+
+# --- Endpoints de Supermercado e Lista de Compras ---
+@app.post("/search-supermarkets")
+def search_supermarkets(req: SearchSupermarketsRequest, current_user: User = Depends(get_current_user)):
+    results = search_supermarkets_ai(req.region)
+    return results
+
+@app.post("/quote-shopping-list")
+def quote_shopping_list(req: QuoteShoppingListRequest, current_user: User = Depends(get_current_user)):
+    results = quote_shopping_list_ai(req.items, req.supermarket, req.region)
+    return results

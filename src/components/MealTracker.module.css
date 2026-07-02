@@ -1,0 +1,161 @@
+.container {
+  margin-top: 2rem;
+}
+
+.modalOverlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background: var(--card-bg);
+  padding: 2rem;
+  border-radius: 16px;
+  max-width: 400px;
+  width: 90%;
+  border: 1px solid var(--primary);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+  text-align: center;
+}
+
+.title {
+  color: var(--primary);
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.buttons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.5rem;
+  justify-content: center;
+}
+
+.btnYes, .btnNo {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.btnYes {
+  background: var(--primary);
+  color: var(--primary-foreground);
+}
+
+.btnNo {
+  background: var(--error, #ef4444);
+  color: white;
+}
+
+.btnYes:disabled, .btnNo:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.evalButtons {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.evalButtons button {
+  padding: 0.75rem;
+  border-radius: 8px;
+  font-weight: bold;
+  border: 1px solid var(--card-border);
+  background: var(--input-bg);
+  color: var(--foreground);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.evalButtons button:hover {
+  background: var(--primary);
+  color: var(--primary-foreground);
+  border-color: var(--primary);
+}
+
+.hint {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-top: 1rem;
+}
+
+.historyContainer {
+  background: var(--card-bg);
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid var(--card-border);
+}
+
+.historyTitle {
+  font-size: 1.25rem;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.logList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.logItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: var(--input-bg);
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+}
+
+.logMain {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logName {
+  font-weight: bold;
+  color: var(--foreground);
+}
+
+.logMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.evalTag {
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 12px;
+  font-weight: bold;
+}
+
+.evalTag[data-eval="good"] { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+.evalTag[data-eval="regular"] { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+.evalTag[data-eval="bad"] { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+.logDate {
+  font-size: 0.8rem;
+  color: var(--muted);
+}

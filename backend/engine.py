@@ -6,12 +6,15 @@ from datetime import datetime, timedelta
 def calculate_tmb(gender: str, weight: float, height: float, age: int) -> float:
     # Fórmula de Mifflin-St Jeor (Padrão ouro na nutrição moderna)
     base = (10 * weight) + (6.25 * height) - (5 * age)
-    if gender.upper() == 'M':
+    # Garantir que gender seja string e não None
+    gender_str = str(gender or "M").upper()
+    if gender_str == 'M':
         return round(base + 5, 1)
     return round(base - 161, 1)
 
 
 def calculate_tdee(tmb: float, activity_level: str) -> float:
+    if not tmb: return 0
     multipliers = {
         "Sedentário": 1.2,       # Pouco ou nenhum exercício
         "Leve": 1.375,           # Exercício leve 1-3 dias/semana
@@ -36,6 +39,7 @@ def get_bmi_classification(bmi: float, age: int) -> str:
 
 
 def calculate_water_recommendation(weight: float) -> float:
+    if not weight: return 2000.0 # Default fallback
     return weight * 35  # 35 ml por kg
 
 
@@ -70,10 +74,23 @@ def _distribute_macros(total_calories: float, goal: str, weight: float):
 
 def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
                                meals_per_day: int = 4, first_meal_time: str = "07:00",
-                               meal_times: list = None, target_calories_override: float = None,
+                               meal_times: any = None, target_calories_override: float = None,
                                target_protein_override: float = None,
                                target_carbs_override: float = None,
-                               target_fats_override: float = None):
+                               target_fats_override: float = None,
+                               imported_meals_data: any = None,
+                               imported_tips: any = None,
+                               is_custom_diet: bool = False):
+    # Garantir que weight não seja None
+    weight = weight or 70.0
+    tdee = tdee or 2000.0
+
+    # Tratar meal_times se vier como string (JSON)
+    if isinstance(meal_times, str):
+        try:
+            meal_times = json.loads(meal_times)
+        except:
+            meal_times = None
     # ---------- Cálculo de Calorias Alvo (Déficit/Superávit) ----------
     if target_calories_override:
         target_calories = round(target_calories_override)
@@ -95,7 +112,31 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
 
 
     # ---------- Distribuição de refeições por horário ----------
-    MEAL_TEMPLATES = [
+    meals = []
+
+    if is_custom_diet and imported_meals_data:
+        imported_list = []
+        if isinstance(imported_meals_data, str):
+            try: imported_list = json.loads(imported_meals_data)
+            except: pass
+        elif isinstance(imported_meals_data, list):
+            imported_list = imported_meals_data
+            
+        if imported_list:
+            for m in imported_list:
+                meals.append({
+                    "time": m.get("time", "08:00"),
+                    "label": m.get("label", "Refeição"),
+                    "suggestion": m.get("suggestion", ""),
+                    "substitutions": "Mantenha a dieta conforme orientada.",
+                    "calories": m.get("calories", 0),
+                    "protein": m.get("protein", 0),
+                    "carbs": m.get("carbs", 0),
+                    "fat": m.get("fat", 0),
+                })
+    
+    if not meals:
+        MEAL_TEMPLATES = [
         {
             "label": "Café da Manhã",
             "offset_hours": 0,
@@ -176,7 +217,7 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
         selected = MEAL_TEMPLATES  # 6 refeições
 
     # Normalizar shares para somar 1
-    total_share = sum(m["macro_share"] for m in selected)
+    total_share = sum(m["macro_share"] for m in selected) or 1
 
     # Calcular horários a partir do first_meal_time
     try:
@@ -241,13 +282,8 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
         share = tmpl["macro_share"] / total_share
         
         # Usar horário definido pelo usuário se existir
-        imported_meal = meal_times[i] if (meal_times and i < len(meal_times)) else None
-        # Nota: meal_times aqui pode vir do profile (lista de strings) ou ser None.
-        # No entanto, a lógica de importação passa os objetos de refeição inteiros se disponível.
-        
-        # Vamos checar se temos dados detalhados da importação
-        # Atualmente main.py passa profile.meal_times que é só uma lista de horários.
-        # Mas podemos melhorar isso.
+        # Garantir que temos uma lista válida para acesso por índice
+        safe_meal_times = meal_times if isinstance(meal_times, list) else []
         
         cal   = round(target_calories * share)
         prot  = round(total_protein   * share)
@@ -255,22 +291,58 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
         fat   = round(total_fats      * share)
 
         # Usar horário definido pelo usuário se existir, senão calcular
-        if meal_times and i < len(meal_times) and meal_times[i]:
-            time_str = meal_times[i]
+        if i < len(safe_meal_times) and safe_meal_times[i]:
+            time_str = safe_meal_times[i]
         else:
             meal_h = (base_h + tmpl["offset_hours"]) % 24
             time_str = f"{meal_h:02d}:{base_m:02d}"
 
+        # Tratar imported_meals_data
+        imported_list = []
+        if isinstance(imported_meals_data, str):
+            try: imported_list = json.loads(imported_meals_data)
+            except: pass
+        elif isinstance(imported_meals_data, list):
+            imported_list = imported_meals_data
+
+        # Priorizar sugestão importada se houver e for válida
+        suggestion = None
+        imported_text = ""
+        if i < len(imported_list) and isinstance(imported_list[i], dict) and imported_list[i].get("suggestion"):
+            imported_text = imported_list[i]["suggestion"].strip()
+            
+        # Heurística para verificar se o texto importado é "fraco" (ex: "Similar ao almoço", ou template vazio "+ g de")
+        is_weak_text = False
+        lower_text = imported_text.lower()
+        if not imported_text or len(imported_text) < 5:
+            is_weak_text = True
+        elif any(x in lower_text for x in ["similar ao", "igual ao", "mesmo do", "repetir"]):
+            is_weak_text = True
+        elif "+ g de" in lower_text or " g de " in lower_text:
+            # Parece um template vazio sem números
+            is_weak_text = True
+            
+        if imported_text and not is_weak_text:
+            suggestion = imported_text
+        else:
+            # Se for fraco ou não existir, usa a inteligência interna do NutriSmart para gerar uma refeição completa
+            dyn = get_dynamic_suggestion(tmpl["label"], prot, carbs, fat, goal)
+            if "similar ao" in lower_text:
+                suggestion = f"{dyn} (Substituindo '{imported_text}')"
+            else:
+                suggestion = dyn
+
         meals.append({
             "time":          time_str,
             "label":         tmpl["label"],
-            "suggestion":    get_dynamic_suggestion(tmpl["label"], prot, carbs, fat, goal),
+            "suggestion":    suggestion,
             "substitutions": tmpl["substitutions"],
             "calories":      cal,
             "protein":       prot,
             "carbs":         carbs,
             "fat":           fat,
         })
+
 
     # ---------- Dicas ----------
     tips = [
@@ -294,7 +366,23 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
         tips.append("💡 DICA: O treino é o gatilho; a proteína é o tijolo para construir músculo.")
 
     random.shuffle(tips)
-    recommendations = "|||".join(tips[:8])
+    selected_tips = tips[:8]
+
+    # Mesclar com dicas importadas se houver
+    if imported_tips:
+        if isinstance(imported_tips, str):
+            try: imported_tips = json.loads(imported_tips)
+            except: pass
+        
+        if isinstance(imported_tips, list):
+            # Limpar e filtrar dicas vazias
+            clean_imported = [str(t).strip() for t in imported_tips if t and str(t).strip()]
+            # Adicionar ao topo das recomendações (limitando a 5 para não poluir demais)
+            selected_tips = clean_imported[:5] + selected_tips
+            # Garantir que não passamos de 12 dicas no total
+            selected_tips = selected_tips[:12]
+
+    recommendations = "|||".join(selected_tips)
 
     return {
         "calories_target": target_calories,
@@ -308,7 +396,9 @@ def generate_nutritional_plan(goal: str, tdee: float, weight: float = 70.0,
 
 def generate_weight_projection(weight: float, goal: str, duration_weeks: int):
     projection = []
-    rate = -0.5 if goal == "Emagrecimento" else (0.3 if "Ganho" in goal else 0)
+    weight = weight or 70.0
+    goal_str = str(goal or "Manutenção")
+    rate = -0.5 if "Emagrecimento" in goal_str else (0.3 if "Ganho" in goal_str or "Hipertrofia" in goal_str else 0)
     now = datetime.now()
     for i in range(duration_weeks * 7):
         date = now + timedelta(days=i)
@@ -323,3 +413,39 @@ def generate_weight_projection(weight: float, goal: str, duration_weeks: int):
 def recalculate_projection_with_logs(profile, weight_logs: list):
     duration_weeks = (profile.project_duration_months or 12) * 4
     return json.dumps(generate_weight_projection(profile.weight, profile.goals, duration_weeks))
+
+
+def recalculate_remaining_meals_for_today(meals: list, missed_meal_name: str) -> list:
+    """
+    Se uma refeição foi pulada, redistribui as macros dela para as próximas refeições do dia.
+    """
+    missed_index = -1
+    for i, m in enumerate(meals):
+        if m["label"] == missed_meal_name:
+            missed_index = i
+            break
+            
+    if missed_index == -1 or missed_index == len(meals) - 1:
+        # Refeição não encontrada ou é a última refeição do dia (não há para onde redistribuir hoje)
+        return meals
+        
+    missed_meal = meals[missed_index]
+    remaining_meals_count = len(meals) - 1 - missed_index
+    
+    extra_cal = missed_meal.get("calories", 0) / remaining_meals_count
+    extra_prot = missed_meal.get("protein", 0) / remaining_meals_count
+    extra_carbs = missed_meal.get("carbs", 0) / remaining_meals_count
+    extra_fat = missed_meal.get("fat", 0) / remaining_meals_count
+    
+    # Zera a refeição perdida (opcional, ou podemos apenas deixá-la como estava, mas no plano já foi)
+    # Vamos manter a refeição lá, mas redistribuir as macros nas próximas
+    
+    for i in range(missed_index + 1, len(meals)):
+        meals[i]["calories"] = round(meals[i].get("calories", 0) + extra_cal)
+        meals[i]["protein"] = round(meals[i].get("protein", 0) + extra_prot)
+        meals[i]["carbs"] = round(meals[i].get("carbs", 0) + extra_carbs)
+        meals[i]["fat"] = round(meals[i].get("fat", 0) + extra_fat)
+        # Adiciona um aviso na sugestão informando que as quantidades devem aumentar
+        meals[i]["suggestion"] = f"[RECALCULADO: +{round(extra_cal)} Kcal (+{round(extra_prot)}g Prot, +{round(extra_carbs)}g Carb)] {meals[i].get('suggestion', '')}"
+        
+    return meals
