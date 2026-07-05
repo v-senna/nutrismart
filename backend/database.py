@@ -1,6 +1,6 @@
 import os
 import shutil
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
 # Detectar se estamos na Vercel
@@ -18,8 +18,8 @@ if SQLALCHEMY_DATABASE_URL.startswith("postgres://"):
 
 # ---------------------------------------------------------
 # Se for SQLite na Vercel, mover para /tmp (único dir com write)
-# AVISO: /tmp é efêmero — dados podem ser perdidos entre cold starts.
-# Para persistência real, configure DATABASE_URL com PostgreSQL.
+# AVISO: /tmp é efêmero — dados são perdidos entre cold starts.
+# Para persistência real, configure DATABASE_URL com PostgreSQL (Neon).
 # ---------------------------------------------------------
 if IS_VERCEL and SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
     db_name = "nutrismart_v2.db"
@@ -40,11 +40,17 @@ if SQLALCHEMY_DATABASE_URL.startswith("sqlite"):
         connect_args={"check_same_thread": False},
     )
 else:
+    # PostgreSQL (Neon, Supabase, etc.) — otimizado para serverless
     engine = create_engine(
         SQLALCHEMY_DATABASE_URL,
-        pool_pre_ping=True,   # Reconecta se a conexão caiu (importante em serverless)
-        pool_size=1,          # Serverless não precisa de pool grande
-        max_overflow=0,
+        pool_pre_ping=True,       # Testa conexão antes de usar (evita conexões mortas)
+        pool_size=1,              # Serverless: pool pequeno
+        max_overflow=2,           # Permite até 2 conexões extras em pico
+        pool_timeout=30,          # Timeout de 30s para obter conexão
+        pool_recycle=300,         # Recicla conexões a cada 5 min
+        connect_args={
+            "sslmode": "require"  # Neon exige SSL
+        }
     )
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)

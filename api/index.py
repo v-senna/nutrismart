@@ -3,7 +3,7 @@ import os
 
 # Adiciona o diretório 'backend' ao path para que os imports funcionem na Vercel
 backend_path = os.path.join(os.path.dirname(__file__), "..", "backend")
-sys.path.append(backend_path)
+sys.path.insert(0, os.path.abspath(backend_path))
 
 from main import app as fastapi_app
 
@@ -21,7 +21,3 @@ async def app(scope, receive, send):
             scope["path"] = path[4:] or "/"
             scope["raw_path"] = scope["path"].encode()
     await fastapi_app(scope, receive, send)
-
-# Mangum adapta o app ASGI para o formato de função serverless da AWS Lambda
-from mangum import Mangum
-handler = Mangum(app, lifespan="off")
